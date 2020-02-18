@@ -109,7 +109,14 @@ if __name__=="__main__":
    #listIdPs = getIdPs()
 
    for idp in listIdPs:
+      result = []
       for sp in sps:
-         print("IdP '%s' on SP '%s' results into: %s" % (idp, sp, checkIdP(driver,sp,idp)))
+         result.append(checkIdP(driver,sp,idp))
+
+      # se tutti e 2 i check sono andati bene, allora l'IdP è OK, altrimenti no.
+      if (result[0] == result[1] == "OK"):
+         print("IdP '%s' results into: OK" % (idp))
+      else:
+         print("IdP '%s' results into: NOT OK" % (idp))
 
    driver.close()
