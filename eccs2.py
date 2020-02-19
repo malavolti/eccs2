@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
+from datetime import date
 import logging
 
 
@@ -128,8 +129,8 @@ def getLogger(filename,log_level="DEBUG",path="./"):
 
 if __name__=="__main__":
 
-   eccs2log = getLogger("logs/eccs2.log","INFO")
-   eccs2checks = getLogger("logs/eccs2checks.log","INFO")
+   eccs2log = getLogger("logs/eccs2_"+date.today().isoformat()+".log","INFO")
+   eccs2checksLog = getLogger("logs/eccs2checks_"+date.today().isoformat()+".log","INFO")
 
    driver = setup()
 
@@ -148,7 +149,7 @@ if __name__=="__main__":
    for idp in listIdPs:
       result = []
       for sp in sps:
-         result.append(checkIdP(driver,sp,idp,eccs2checks))
+         result.append(checkIdP(driver,sp,idp,eccs2checksLog))
 
       # se tutti e 2 i check sono andati bene, allora l'IdP è OK, altrimenti no.
       if (result[0] == result[1] == "OK"):
