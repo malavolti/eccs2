@@ -6,12 +6,14 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
+import logging
 
 
 """
   Apre un SP con Discovery Service, seleziona l'IdP di cui fare il test e lo raggiunge iniziando una vera sessione via browser.
   A noi serve fare un test di accesso e presentazione della pagina di Login su 2 SP dislocati geograficamente in punti diversi.
-  Per questo erano stati scelti SP24(IDEM) e l'Attribute Viewer (SWITCH). Se il test fallisce su entrambi, allora non va bene.
+  Per questo sono stati scelti SP24(IDEM) e l'Attribute Viewer (SWITCH). Se il test fallisce su entrambi, allora non va bene.
+  Questo script funziona SOLO con SP aventi Embedded Discovery Service come DS.
 """
 
 def logFile(idp,content):
@@ -59,6 +61,7 @@ def checkIdP(driver,sp,idp):
    except NoSuchElementException as e:
      pass
    except TimeoutException as e:
+     logging.info("%s;%s;TIMEOUT" % (idp,sp))
      return "TIMEOUT"
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
@@ -71,10 +74,13 @@ def checkIdP(driver,sp,idp):
    password_found = re.search(pattern_password,driver.page_source, re.I)
 
    if(metadata_not_found):
+      logging.info("%s;%s;No-eduGAIN-Metadata" % (idp,sp))
       return "No-eduGAIN-Metadata"
    elif not username_found and not password_found:
+      logging.info("%s;%s;Invalid-Form" % (idp,sp))
       return "Invalid Form"
    else:
+      logging.info("%s;%s;OK" % (idp,sp))
       return "OK"
 
 def setup():
@@ -93,6 +99,11 @@ def setup():
 
 
 if __name__=="__main__":
+
+   import os
+   os.remove("eccs2.log")
+
+   logging.basicConfig(format='%(message)s',filename='eccs2.log',level=logging.INFO)
 
    driver = setup()
 
