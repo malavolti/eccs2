@@ -43,15 +43,17 @@ def getIdPs():
    idp_list = []
 
    for idp in idp_dict:
-      idp_list.append(idp['entityID'])
+      idp_list.append(idp['displayname'].split(';')[1].split('==')[0])
 
    return idp_list
 
 
-def checkIdP(driver,sp,idp,logger):
+def checkIdP(sp,idp,logger):
    import re
 
-   # Apro la URL contenente il Discovery Service, inserisco l'idp e vado alla pagina di login
+   driver = setup()
+
+   # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
       driver.get(sp)
       driver.find_element_by_id("idpSelectInput").send_keys(idp + Keys.ENTER)
@@ -63,6 +65,7 @@ def checkIdP(driver,sp,idp,logger):
      pass
    except TimeoutException as e:
      logger.info("%s;%s;TIMEOUT" % (idp,sp))
+     driver.close()
      return "TIMEOUT"
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
@@ -76,29 +79,34 @@ def checkIdP(driver,sp,idp,logger):
 
    if(metadata_not_found):
       logger.info("%s;%s;No-eduGAIN-Metadata" % (idp,sp))
+      driver.close()
       return "No-eduGAIN-Metadata"
    elif not username_found and not password_found:
       logger.info("%s;%s;Invalid-Form" % (idp,sp))
+      driver.close()
       return "Invalid Form"
    else:
       logger.info("%s;%s;OK" % (idp,sp))
+      driver.close()
       return "OK"
 
+# Setup Chromium Webdriver
 def setup():
 
    chrome_options = webdriver.ChromeOptions()
    chrome_options.add_argument('--headless')
    chrome_options.add_argument('--no-sandbox')
 
-   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
+#   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
+   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
 
-   # Configuro i timeout
+   # Configure timeouts
    driver.set_page_load_timeout(45)
    driver.set_script_timeout(45)
 
    return driver
 
-# Use logger to produce files consumed by ECCS-2
+# Use logger to produce files consumed by ECCS-2 API
 def getLogger(filename,log_level="DEBUG",path="./"):
 
     logger = logging.getLogger(filename)
@@ -126,35 +134,37 @@ def getLogger(filename,log_level="DEBUG",path="./"):
 
     return logger
 
-
+# MAIN
 if __name__=="__main__":
 
    eccs2log = getLogger("logs/eccs2_"+date.today().isoformat()+".log","INFO")
    eccs2checksLog = getLogger("logs/eccs2checks_"+date.today().isoformat()+".log","INFO")
 
-   driver = setup()
-
    sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
-   listIdPs = [
-      'https://garr-idp-prod.irccs.garr.it',
-      'https://idp.hec.gov.pk/idp/shibboleth',
-      'https://login.itsak.gr/idp/shibboleth',
-      'https://idp.eastdurham.ac.uk/openathens',
-      'https://idp-lib.nwafu.edu.cn/idp/shibboleth',
-   ]
+#   listIdPsTest = [
+#      'University of Utah',
+#      'Nanjing Agriculture University',
+#      'Fujian Normal University',
+#      'SUIBE',
+#      'Zuyd Hogeschool',
+#      'Sur University College',
+#      'https://idp.hec.gov.pk/idp/shibboleth',
+#      'https://login.itsak.gr/idp/shibboleth',
+#      'https://idp.eastdurham.ac.uk/openathens',
+#      'https://idp-lib.nwafu.edu.cn/idp/shibboleth',
+#   ]
 
-   #listIdPs = getIdPs()
+   listIdPs = getIdPs()
 
    for idp in listIdPs:
       result = []
       for sp in sps:
-         result.append(checkIdP(driver,sp,idp,eccs2checksLog))
+         result.append(checkIdP(sp,idp,eccs2checksLog))
 
-      # se tutti e 2 i check sono andati bene, allora l'IdP è OK, altrimenti no.
+      # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
       if (result[0] == result[1] == "OK"):
          eccs2log.info("IdP '%s' results into: OK" % (idp))
       else:
          eccs2log.info("IdP '%s' results into: NOT OK" % (idp))
 
-   driver.close()
