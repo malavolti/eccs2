@@ -66,6 +66,7 @@ def checkIdP(sp,idp,logger):
    except TimeoutException as e:
      logger.info("%s;%s;TIMEOUT" % (idp,sp))
      driver.close()
+     driver.quit()
      return "TIMEOUT"
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
@@ -80,14 +81,17 @@ def checkIdP(sp,idp,logger):
    if(metadata_not_found):
       logger.info("%s;%s;No-eduGAIN-Metadata" % (idp,sp))
       driver.close()
+      driver.quit()
       return "No-eduGAIN-Metadata"
    elif not username_found and not password_found:
       logger.info("%s;%s;Invalid-Form" % (idp,sp))
       driver.close()
+      driver.quit()
       return "Invalid Form"
    else:
       logger.info("%s;%s;OK" % (idp,sp))
       driver.close()
+      driver.quit()
       return "OK"
 
 # Setup Chromium Webdriver
