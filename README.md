@@ -1,17 +1,12 @@
 # HOWTO Install and Configure ECCS-2
 
-* `sudo apt install python3-pip chromium chromium-l10n git`
-* `pip3 install certifi selenium urllib3 flask flask-jsonpify flask-restful`
-* `cd /opt ; git clone https://github.com/malavolti/eccs2.git`
-* `cd /opt/eccs2 ; ./eccs2.py`
-
-# Create and configure the ECCS-2 database (not used now)
-* `sudo mysql`
-* `CREATE DATABASE eccs2db;`
-* `CREATE USER 'eccs2user'@'localhost' IDENTIFIED BY '<password>';`
-* `GRANT ALL PRIVILEGES ON eccs2db.* TO 'eccs2user'@'localhost'`
-* `SHOW GRANTS FOR 'eccs2user'@'localhost';`
-* `FLUSH PRIVILEGES;`
+* `sudo apt install python3 python3-pip chromium chromium-l10n git`
+* `python3 -m pip install --user --upgrade pip virtualenv`
+* `python3 -m venv eccs2venv`
+* `source eccs2venv/bin/activate`   (`deactivate` di exit Virtualenv)
+  * `python3 -m pip install --upgrade wheel setuptools certifi selenium urllib3 flask flask-jsonpify flask-restful`
+  * `cd ~ ; git clone https://github.com/malavolti/eccs2.git`
+  * `cd eccs2 ; ./eccs2.py`
 
 # API
 
@@ -29,4 +24,4 @@
 
 # API Development Server
 
-* `cd /opt/eccs2 ; ./api.py`
+* `cd ~/eccs2 ; ./api.py`
