@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import TimeoutException
 from datetime import date
 import logging
 
@@ -25,7 +19,8 @@ def logFile(idp,content):
 
    f.close()
 
-def getIdPs():
+
+def getIdpListFromUrl():
    import certifi
    import urllib3
    import json
@@ -36,27 +31,60 @@ def getIdPs():
              )
 
    url = "https://technical.edugain.org/api.php?action=list_eccs_idps"
-   idp_json = manager.request('GET', url)
+   json_data = manager.request('GET', url)
+   data = json.loads(json_data.data.decode('utf-8'))
 
-   idp_dict = json.loads(idp_json.data.decode('utf-8'))
+   return data
 
-   idp_list = []
 
-   for idp in idp_dict:
-      idp_list.append(idp['displayname'].split(';')[1].split('==')[0])
+def getIdpListFromFile():
+   import json
 
-   return idp_list
+   with open('list_eccs_idps-idem.txt') as f:
+      json_data = json.loads(f.read())
+      return json_data
 
 
 def checkIdP(sp,idp,logger):
+   from selenium import webdriver
+   from selenium.webdriver.common.by import By
+   from selenium.webdriver.support.ui import Select
+   from selenium.webdriver.common.keys import Keys
+   from selenium.common.exceptions import NoSuchElementException
+   from selenium.common.exceptions import TimeoutException
    import re
 
-   driver = setup()
+   # Configure Web-driver
+   chrome_options = webdriver.ChromeOptions()
+   chrome_options.add_argument('--headless')
+   chrome_options.add_argument('--no-sandbox')
+
+#   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
+   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
+
+   # Configure timeouts: 45 sec
+   driver.set_page_load_timeout(45)
+   driver.set_script_timeout(45)
+
+   # Configure Blacklists
+   federation_blacklist = ['http://www.surfconext.nl/','https://www.wayf.dk','http://feide.no/']
+   entities_blacklist = ['https://idp.eie.gr/idp/shibboleth','https://gn-vho.grnet.gr/idp/shibboleth','https://wtc.tu-chemnitz.de/shibboleth','https://wtc.tu-chemnitz.de/shibboleth','https://idp.fraunhofer.de/idp/shibboleth','https://login.hs-owl.de/nidp/saml2/metadata','https://idp.dfn-cert.de/idp/shibboleth']
+
+   if (idp['entityID'] in entities_blacklist):
+      logger.info("%s;%s;IdP excluded from checks")
+      driver.close()
+      driver.quit()
+      return "Disabled"
+   if (idp['registrationAuthority'] in federation_blacklist):
+      logger.info("%s;%s;Federation excluded from checks")
+      driver.close()
+      driver.quit()
+      return "Disabled"
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
       driver.get(sp)
-      driver.find_element_by_id("idpSelectInput").send_keys(idp + Keys.ENTER)
+      driver.find_element_by_id("idpSelectInput").send_keys(idp['entityID'] + Keys.ENTER)
 
       driver.find_element_by_id("username")
       driver.find_element_by_id("password")
@@ -64,7 +92,7 @@ def checkIdP(sp,idp,logger):
    except NoSuchElementException as e:
      pass
    except TimeoutException as e:
-     logger.info("%s;%s;TIMEOUT" % (idp,sp))
+     logger.info("%s;%s;TIMEOUT" % (idp['entityID'],sp))
      driver.close()
      driver.quit()
      return "TIMEOUT"
@@ -79,36 +107,21 @@ def checkIdP(sp,idp,logger):
    password_found = re.search(pattern_password,driver.page_source, re.I)
 
    if(metadata_not_found):
-      logger.info("%s;%s;No-eduGAIN-Metadata" % (idp,sp))
+      logger.info("%s;%s;No-eduGAIN-Metadata" % (idp['entityID'],sp))
       driver.close()
       driver.quit()
       return "No-eduGAIN-Metadata"
    elif not username_found and not password_found:
-      logger.info("%s;%s;Invalid-Form" % (idp,sp))
+      logger.info("%s;%s;Invalid-Form" % (idp['entityID'],sp))
       driver.close()
       driver.quit()
       return "Invalid Form"
    else:
-      logger.info("%s;%s;OK" % (idp,sp))
+      logger.info("%s;%s;OK" % (idp['entityID'],sp))
       driver.close()
       driver.quit()
       return "OK"
 
-# Setup Chromium Webdriver
-def setup():
-
-   chrome_options = webdriver.ChromeOptions()
-   chrome_options.add_argument('--headless')
-   chrome_options.add_argument('--no-sandbox')
-
-#   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
-   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
-
-   # Configure timeouts
-   driver.set_page_load_timeout(45)
-   driver.set_script_timeout(45)
-
-   return driver
 
 # Use logger to produce files consumed by ECCS-2 API
 def getLogger(filename,log_level="DEBUG",path="./"):
@@ -146,20 +159,8 @@ if __name__=="__main__":
 
    sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
-#   listIdPsTest = [
-#      'University of Utah',
-#      'Nanjing Agriculture University',
-#      'Fujian Normal University',
-#      'SUIBE',
-#      'Zuyd Hogeschool',
-#      'Sur University College',
-#      'https://idp.hec.gov.pk/idp/shibboleth',
-#      'https://login.itsak.gr/idp/shibboleth',
-#      'https://idp.eastdurham.ac.uk/openathens',
-#      'https://idp-lib.nwafu.edu.cn/idp/shibboleth',
-#   ]
-
-   listIdPs = getIdPs()
+   #listIdPs = getIdpListFromUrl()
+   listIdPs = getIdpListFromFile()
 
    for idp in listIdPs:
       result = []
@@ -168,7 +169,9 @@ if __name__=="__main__":
 
       # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
       if (result[0] == result[1] == "OK"):
-         eccs2log.info("IdP '%s' results into: OK" % (idp))
+         eccs2log.info("IdP '%s' results: OK" % (idp['entityID']))
+      elif (result[0] == result[1] == "DISABLED"):
+         eccs2log.info("IdP '%s' results: DISABLED" % (idp['entityID']))
       else:
-         eccs2log.info("IdP '%s' results into: NOT OK" % (idp))
+         eccs2log.info("IdP '%s' results: ERROR" % (idp['entityID']))
 
