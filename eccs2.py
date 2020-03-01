@@ -11,15 +11,6 @@ import logging
   Questo script funziona SOLO con SP aventi Embedded Discovery Service come DS.
 """
 
-def logFile(idp,content):
-   path = idp+".txt"
-
-   f = open(path,'w')
-   f.write(content)
-
-   f.close()
-
-
 def getIdpListFromUrl():
    import certifi
    import urllib3
@@ -40,7 +31,7 @@ def getIdpListFromUrl():
 def getIdpListFromFile():
    import json
 
-   with open('list_eccs_idps-idem.txt') as f:
+   with open('list_eccs_idps-idem.txt','r',encoding='utf-8') as f:
       json_data = json.loads(f.read())
       return json_data
 
@@ -71,15 +62,15 @@ def checkIdP(sp,idp,logger):
    entities_blacklist = ['https://idp.eie.gr/idp/shibboleth','https://gn-vho.grnet.gr/idp/shibboleth','https://wtc.tu-chemnitz.de/shibboleth','https://wtc.tu-chemnitz.de/shibboleth','https://idp.fraunhofer.de/idp/shibboleth','https://login.hs-owl.de/nidp/saml2/metadata','https://idp.dfn-cert.de/idp/shibboleth']
 
    if (idp['entityID'] in entities_blacklist):
-      logger.info("%s;%s;IdP excluded from checks")
+      logger.info("%s;%s;IdP excluded from checks" % (idp['entityID'],sp))
       driver.close()
       driver.quit()
-      return "Disabled"
+      return "DISABLED"
    if (idp['registrationAuthority'] in federation_blacklist):
-      logger.info("%s;%s;Federation excluded from checks")
+      logger.info("%s;%s;Federation excluded from checks" % (idp['entityID'],sp))
       driver.close()
       driver.quit()
-      return "Disabled"
+      return "DISABLED"
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
@@ -151,11 +142,25 @@ def getLogger(filename,log_level="DEBUG",path="./"):
 
     return logger
 
+
+# Return a list of email address for a specific type of contact
+def getIdPContacts(idp,contactType):
+
+   ctcList = []
+   for ctcType in idp['contacts']:
+      if (ctcType == contactType):
+         for ctc in idp['contacts'][contactType]:
+            ctcList.append(ctc['emailOrPhone']['EmailAddress'][0])
+
+   return ctcList
+
 # MAIN
 if __name__=="__main__":
 
-   eccs2log = getLogger("logs/eccs2_"+date.today().isoformat()+".log","INFO")
-   eccs2checksLog = getLogger("logs/eccs2checks_"+date.today().isoformat()+".log","INFO")
+   day = date.today().isoformat() 
+
+   eccs2log = getLogger("logs/eccs2_"+day+".log","INFO")
+   eccs2checksLog = getLogger("logs/eccs2checks_"+day+".log","INFO")
 
    sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
@@ -167,11 +172,47 @@ if __name__=="__main__":
       for sp in sps:
          result.append(checkIdP(sp,idp,eccs2checksLog))
 
+      listTechContacts = getIdPContacts(idp,'technical')
+      listSuppContacts = getIdPContacts(idp,'support')
+
+      strTechContacts = ','.join(listTechContacts)
+      strSuppContacts = ','.join(listSuppContacts)
+
       # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
       if (result[0] == result[1] == "OK"):
-         eccs2log.info("IdP '%s' results: OK" % (idp['entityID']))
+         # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-status-1;SP-entityID-2;SP-status-2
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+             idp['displayname'].split(';')[1].split('==')[0],
+             idp['entityID'],
+             idp['registrationAuthority'],
+             strTechContacts,
+             strSuppContacts,
+             'OK',
+             sps[0],
+             result[0],
+             sps[1],
+             result[1]))
       elif (result[0] == result[1] == "DISABLED"):
-         eccs2log.info("IdP '%s' results: DISABLED" % (idp['entityID']))
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+             idp['displayname'].split(';')[1].split('==')[0],
+             idp['entityID'],
+             idp['registrationAuthority'],
+             strTechContacts,
+             strSuppContacts,
+             'DISABLE',
+             sps[0],
+             result[0],
+             sps[1],
+             result[1]))
       else:
-         eccs2log.info("IdP '%s' results: ERROR" % (idp['entityID']))
-
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+             idp['displayname'].split(';')[1].split('==')[0],
+             idp['entityID'],
+             idp['registrationAuthority'],
+             strTechContacts,
+             strSuppContacts,
+             'ERROR',
+             sps[0],
+             result[0],
+             sps[1],
+             result[1]))

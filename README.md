@@ -1,6 +1,6 @@
 # HOWTO Install and Configure ECCS-2
 
-* `sudo apt install python3 python3-pip chromium chromium-l10n git`
+* `sudo apt install python3 python3-pip chromium chromium-l10n git libapache2-mod-wsgi python3-dev`
 * `python3 -m pip install --user --upgrade pip virtualenv`
 * `python3 -m venv eccs2venv`
 * `source eccs2venv/bin/activate`   (`deactivate` di exit Virtualenv)
@@ -11,7 +11,7 @@
 # API
 
 * `/eccs/test` (Trivial Test)
-* `/eccs/checks` (Should return the results of the last checks)
+* `/eccs/checks` (Return the results of the last checks)
 * `/eccs/checks?<parameter>=<value>`:
   * `date=2020-02-20` (select date)
   * `idp=Any%20words%20do%20you%20like%20url%20encoded`
@@ -21,7 +21,10 @@
     * 'No-eduGAIN-Metadata'
     * 'Form-Invalid'
     * 'Excluded'
+* /eccs/eccsresults (Return the results of the last check ready for ECCS Gui)
 
 # API Development Server
 
+* `sudo apt install libapache2-mod-wsgi-py3 python3-dev`
+* `sudo a2enmod wsgi`
 * `cd ~/eccs2 ; ./api.py`
