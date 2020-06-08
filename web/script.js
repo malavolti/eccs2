@@ -13,6 +13,11 @@ function format ( d ) {
             '<td></td>'+
         '</tr>'+
         '<tr>'+
+            '<td>Support Contacts:</td>'+
+            '<td>'+d.contacts.support+'</td>'+
+            '<td></td>'+
+        '</tr>'+
+        '<tr>'+
             '<td>SP1:</td>'+
             '<td>'+d.sp1.entityID+'</td>'+
             '<td>'+d.sp1.status+'</td>'+
@@ -26,7 +31,7 @@ function format ( d ) {
 }
  
 $(document).ready(function() {
-    var table = $('#example').DataTable( {
+    var table = $('#eccstable').DataTable( {
         "ajax": { 
            "url": "data.json",
            "dataSrc": ""
@@ -46,11 +51,7 @@ $(document).ready(function() {
             { "data": "registrationAuthority" },
             { 
               "data": "contacts.technical",
-              "defaultContent": ''
-            },
-            { 
-              "data": "contacts.support",
-              "defaultContent": ''
+              "defaultContent": ""
             },
             { "data": "date" },
             { "data": "status" }
@@ -70,7 +71,7 @@ $(document).ready(function() {
     } );
      
     // Add event listener for opening and closing details
-    $('#example tbody').on('click', 'td.details-control', function () {
+    $('#eccstable tbody').on('click', 'td.details-control', function () {
         var tr = $(this).closest('tr');
         var row = table.row( tr );
  

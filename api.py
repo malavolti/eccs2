@@ -8,6 +8,7 @@ from pathlib import PurePath
 import logging
 from logging.handlers import RotatingFileHandler
 import re
+import eccs2properties
 
 
 app = Flask(__name__)
@@ -67,7 +68,7 @@ class Checks(Resource):
     def get(self):
        app.logger.info("Request 'Checks'")
 
-       file_path = "logs/eccs2checks_2020-02-22.log"
+       file_path = "logs/eccs2checks_%s.log" % eccs2properties.day
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None 
@@ -142,7 +143,6 @@ class Checks(Resource):
 
 # Build Email Addresses Link for ECCS2 Web Gui
 def buildEmailAddress(listContacts):
-
     listCtcs = listContacts.split(",")
     hrefList = []
 
@@ -155,7 +155,7 @@ class EccsResults(Resource):
     def get(self):
        app.logger.info("Request 'EccsResults'")
 
-       file_path = "logs/eccs2_2020-03-01.log"
+       file_path = "logs/eccs2_%s.log" % eccs2properties.day
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None
@@ -305,10 +305,15 @@ class EccsResults(Resource):
        else:
           return jsonify(result)
 
+# Run check for a specific IDP
+# <idpdisc:DiscoveryResponse Location>?entityID=<IDP_ENITIYID>&target=<DESTINATION_RESOURCE_URL> (tutto url encoded)
+#class RunCheck(Resource):
+#    def get(self):
 
 api.add_resource(Test, '/eccs/test') # Route_1
 api.add_resource(Checks, '/eccs/checks') # Route_2
 api.add_resource(EccsResults, '/eccs/eccsresults') # Route_3
+#api.add_resource(RunCheck, '/eccs/runcheck') # Route_4
 
 if __name__ == '__main__':
    
