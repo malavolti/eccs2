@@ -8,9 +8,10 @@ import requests
 import sys
 import time
 
+from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2PATH, ECCS2NUMPROCESSES 
 from subprocess import Popen,PIPE
 
-# returns a Dict on "{ nameFed:reg_auth }"
+# Returns a Dict on "{ nameFed:reg_auth }"
 def getRegAuthDict(list_feds):
    regAuth_dict = {}
 
@@ -23,7 +24,7 @@ def getRegAuthDict(list_feds):
    return regAuth_dict
 
 
-# returns a list of IdP for a single federation
+# Returns a list of IdP for a single federation
 def getIdpList(list_eccs_idps,reg_auth):
 
    fed_idp_list = []
@@ -44,7 +45,7 @@ def getListFeds(url, filename):
 
    # then open it and work with local file
    with open("%s" % (filename), mode="r", encoding='utf-8') as f:
-      return json.loads(f.read())
+      return json.loads(f.read().replace("'", "&apos;"))
 
 
 # Returns a Python List
@@ -57,16 +58,9 @@ def getListEccsIdps(url, filename):
 
    # then open it and work with local file
    with open("%s" % (filename), mode="r", encoding='utf-8') as f:
-      return json.loads(f.read())
+      return json.loads(f.read().replace("'", "&apos;"))
 
-# Prepare input file for ECCS2
-def genEccs2input(reg_auth_dict):
-   for name,regAuth in reg_auth_dict.items():
-      fed_idp_list = getIdpList(list_eccs_idps,regAuth)
-      filename = "/tmp/data/inputEccs2/%s.txt" % name
-      with open("%s" % (filename), mode="w+", encoding='utf-8') as f:
-         f.write(','.join(str(idp) for idp in fed_idp_list))
-
+# Run Command
 async def run(name,queue,stdout_file,stderr_file):
    while True:
       # Get a "cmd item" out of the queue.
@@ -82,9 +76,9 @@ async def run(name,queue,stdout_file,stderr_file):
       stdout, stderr = await proc.communicate()
 
       if stdout:
-         stdout_file.write(f'-----\n[cmd-out]\n{cmd}\n[stdout]\n{stdout.decode()}')
+         stdout_file.write(f'-----\n[cmd-out]\n{cmd}\n\n[stdout]\n{stdout.decode()}')
       if stderr:
-         stderr_file.write(f'-----\n[cmd-err]\n{cmd}\n[stderr]\n{stderr.decode()}')
+         stderr_file.write(f'-----\n[cmd-err]\n{cmd}\n\n[stderr]\n{stderr.decode()}')
 
       # Notify the queue that the "work cmd" has been processed.
       queue.task_done()
@@ -102,7 +96,7 @@ async def main(cmd_list,stdout_file,stderr_file):
     tasks = []
     #for i in range(15): # !!!-WORKING-!!!
     #for i in range(30): # !!!-WORSTE-!!!
-    for i in range(10):
+    for i in range(ECCS2NUMPROCESSES):
         task = asyncio.create_task(run("cmd-{%d}" % i, queue, stdout_file, stderr_file))
         tasks.append(task)
 
@@ -134,18 +128,17 @@ if __name__=="__main__":
    filename = "/tmp/data/list_eccs_idps.txt"
    list_eccs_idps = getListEccsIdps(url, filename)
 
-   stdout_file = open(eccs2properties.ECCS2STDOUT,"w+")
-   stderr_file = open(eccs2properties.ECCS2STDERR,"w+")
+   stdout_file = open(ECCS2STDOUT,"w+")
+   stderr_file = open(ECCS2STDERR,"w+")
 
    # Prepare input file for ECCS2
    regAuthDict = getRegAuthDict(list_feds)
-   #genEccs2input(regAuthDict)
 
    for name,regAuth in regAuthDict.items():
       idpJsonList = getIdpList(list_eccs_idps,regAuth)
 
       num_idps = len(idpJsonList)
-      cmd_list = [["%s/eccs2.py \'%s\'" % (eccs2properties.ECCS2PATH, json.dumps(idp))] for idp in idpJsonList]
+      cmd_list = [["%s/eccs2.py \'%s\'" % (ECCS2PATH, json.dumps(idp))] for idp in idpJsonList]
 
       proc_list = []
       count = 0

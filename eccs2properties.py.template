@@ -1,0 +1,27 @@
+#!/usr/bin/env python3.8
+
+from datetime import date
+
+day = date.today().isoformat()
+
+ECCS2PATH = "/opt/eccs2"
+ECCS2LOGSPATH = "%s/logs" % ECCS2PATH
+ECCS2RESULTSLOG = "eccs2_%s.log" % day
+ECCS2CHECKSLOG = "eccs2checks_%s.log" % day
+ECCS2SELENIUMLOG = "%s/selenium_chromedriver.log" % ECCS2LOGSPATH
+ECCS2STDOUT = "%s/stdout.log" % ECCS2LOGSPATH
+ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSPATH
+
+ECCS2NUMPROCESSES = 20
+
+FEDS_BLACKLIST = [
+   '<REGISTRATION-AUTHORITY-1>',
+   '<REGISTRATION-AUTHORITY-2>',
+   '<REGISTRATION-AUTHORITY-3>',
+]
+
+IDPS_BLACKLIST = [
+   '<ENTITYID-IDP-1>',
+   '<ENTITYID-IDP-2>',
+   '<ENTITYID-IDP-3>',
+]

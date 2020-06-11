@@ -4,18 +4,20 @@ import argparse
 import json
 import logging
 import os
-import eccs2properties
 import signal
 import re
 import requests
 
 from datetime import date
+from eccs2properties import ECCS2LOGSPATH, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, FEDS_BLACKLIST, IDPS_BLACKLIST
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import WebDriverException
+from urllib3.exceptions import MaxRetryError
 
 
 """
@@ -27,8 +29,8 @@ from selenium.common.exceptions import TimeoutException
 def checkIdP(sp,idp,logger,driver):
 
    # Configure Blacklists
-   federation_blacklist = eccs2properties.FEDS_BLACKLIST
-   entities_blacklist = eccs2properties.IDPS_BLACKLIST 
+   federation_blacklist = FEDS_BLACKLIST
+   entities_blacklist = IDPS_BLACKLIST 
 
    if (idp['registrationAuthority'] in federation_blacklist):
       logger.info("%s;%s;NULL;Federation excluded from checks" % (idp['entityID'],sp))
@@ -46,20 +48,46 @@ def checkIdP(sp,idp,logger,driver):
    except TimeoutException as e:
      logger.info("%s;%s;999;TIMEOUT" % (idp['entityID'],sp))
      return "TIMEOUT"
+
+   except WebDriverException as e:
+     print("!!! WEB DRIVER EXCEPTION !!!")
+     raise e
+
+   except Exception as e:
+     print ("!!! EXCEPTION !!!")
+     raise e
+
+
+   """
+   except MaxRetryError as e:
+     logger.info("%s;%s;111;MaxRetryError" % (idp['entityID'],sp))
+     return "MaxRetryError"
+
+   except ConnectionRefusedError as e:
+     logger.info("%s;%s;222;ConnectionRefusedError" % (idp['entityID'],sp))
+     return "ConnectionRefusedError"
+
+   except ConnectionError as e:
+     logger.info("%s;%s;333;ConnectionError" % (idp['entityID'],sp))
+     return "ConnectionError"
+
    except NoSuchElementException as e:
      print("!!! NO SUCH ELEMENT EXCEPTION !!!")
      print(e.__str__())
      pass
-   except WebDriverException as e:
+   """
+
+   """
      if "ConnectionRefusedError" in e.__str__():
         logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
-        return "Connection-Error"
+        return "ConnectionRefusedError"
+     elif "Connection Refused" in e.__str__():
+        logger.info("%s;%s;000;ConnectionRefused" % (idp['entityID'],sp))
+        return "Connection-Refused"
      else:
         print("!!! UN-HANDLE WEB DRIVER EXCEPTION !!!")
         raise e
-   except:
-     print("!!! UN-HANDLE OTHER EXCEPTION !!!")
-     raise e
+   """
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
@@ -75,16 +103,9 @@ def checkIdP(sp,idp,logger,driver):
       status_code = r.status_code
 
    except requests.exceptions.ConnectionError as e:
-      driver.delete_all_cookies()
-      driver.close()
-      driver.quit()
-
       logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
       return "Connection-Error"
    except requests.exceptions.RequestException as e:
-      driver.delete_all_cookies()
-      driver.close()
-      driver.quit()
       print("!!! UN-HANDLE REQUEST EXCEPTION !!!")
       raise SystemExit(e)
 
@@ -103,10 +124,10 @@ def checkIdP(sp,idp,logger,driver):
 
 
 # Use logger to produce files consumed by ECCS-2 API
-def getLogger(filename,log_level="DEBUG",path="./"):
+def getLogger(filename, path=".", log_level="DEBUG"):
 
     logger = logging.getLogger(filename)
-    ch = logging.FileHandler(path+filename,'a','utf-8')
+    ch = logging.FileHandler(path + '/' + filename,'a','utf-8')
 
     if (log_level == "DEBUG"):
        logger.setLevel(logging.DEBUG)
@@ -138,7 +159,10 @@ def getIdPContacts(idp,contactType):
    for ctcType in idp['contacts']:
       if (ctcType == contactType):
          for ctc in idp['contacts'][contactType]:
-            ctcList.append(ctc['emailOrPhone']['EmailAddress'][0])
+            if (ctc['emailOrPhone'].get('EmailAddress')):
+               ctcList.append(ctc['emailOrPhone']['EmailAddress'][0])
+            else:
+               ctcList.append('missing')
 
    return ctcList
 
@@ -196,8 +220,8 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
 # MAIN
 if __name__=="__main__":
 
-   eccs2log = getLogger("logs/"+eccs2properties.ECCS2LOGPATH,"INFO")
-   eccs2checksLog = getLogger("logs/"+eccs2properties.ECCS2CHECKSLOGPATH,"INFO")
+   eccs2log = getLogger(ECCS2RESULTSLOG, ECCS2LOGSPATH, "INFO")
+   eccs2checksLog = getLogger(ECCS2CHECKSLOG, ECCS2LOGSPATH, "INFO")
 
    sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
@@ -220,9 +244,9 @@ if __name__=="__main__":
    chrome_options.add_argument('--start-maximized')
    chrome_options.add_argument('--disable-extensions')
 
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=./selenium_chromedriver.log'])
+   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=%s' % ECCS2SELENIUMLOG])
    #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
-   driver = webdriver.Chrome('chromedriver', options=chrome_options)
+   #driver = webdriver.Chrome('chromedriver', options=chrome_options)
 
    # Configure timeouts: 30 sec
    driver.set_page_load_timeout(30)

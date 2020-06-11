@@ -6,7 +6,9 @@
 * `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
   * `python3 -m pip install --upgrade wheel setuptools certifi selenium urllib3 flask flask-jsonpify flask-restful`
   * `cd ~ ; git clone https://github.com/malavolti/eccs2.git`
-  * `cd eccs2 ; ./eccs2.py`
+  * `cd eccs2`
+  * `cp eccs2properties.py.template eccs2properties.py` (and change it with your needs)
+  * `./runEccs2.py`
 
 # API Development Server
 
