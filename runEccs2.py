@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.8
 
 import asyncio
+import datetime
 import eccs2properties
 import json
 import pathlib
@@ -8,7 +9,7 @@ import requests
 import sys
 import time
 
-from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2PATH, ECCS2NUMPROCESSES 
+from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2PATH, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
 from subprocess import Popen,PIPE
 
 # Returns a Dict on "{ nameFed:reg_auth }"
@@ -36,28 +37,28 @@ def getIdpList(list_eccs_idps,reg_auth):
 
 
 # Returns a Python Dictionary
-def getListFeds(url, filename):
-   # If file does not exists... download it into the filename
-   path = pathlib.Path(filename)
+def getListFeds(url, dest_file):
+   # If file does not exists... download it into the dest_file
+   path = pathlib.Path(dest_file)
    if(path.exists() == False):
-      with open("%s" % (filename), mode="w+", encoding='utf-8') as f:
+      with open("%s" % (dest_file), mode="w+", encoding='utf-8') as f:
          f.write(requests.get(url).text)
 
    # then open it and work with local file
-   with open("%s" % (filename), mode="r", encoding='utf-8') as f:
+   with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
       return json.loads(f.read().replace("'", "&apos;"))
 
 
 # Returns a Python List
-def getListEccsIdps(url, filename):
-   # If file does not exists... download it into the filename
-   path = pathlib.Path(filename)
+def getListEccsIdps(url, dest_file):
+   # If file does not exists... download it into the dest_file
+   path = pathlib.Path(dest_file)
    if(path.exists() == False):
-      with open("%s" % (filename), mode="w+", encoding='utf-8') as f:
+      with open("%s" % (dest_file), mode="w+", encoding='utf-8') as f:
          f.write(requests.get(url).text)
 
    # then open it and work with local file
-   with open("%s" % (filename), mode="r", encoding='utf-8') as f:
+   with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
       return json.loads(f.read().replace("'", "&apos;"))
 
 # Run Command
@@ -94,8 +95,7 @@ async def main(cmd_list,stdout_file,stderr_file):
 
     # Create worker tasks to process the queue concurrently.
     tasks = []
-    #for i in range(15): # !!!-WORKING-!!!
-    #for i in range(30): # !!!-WORSTE-!!!
+
     for i in range(ECCS2NUMPROCESSES):
         task = asyncio.create_task(run("cmd-{%d}" % i, queue, stdout_file, stderr_file))
         tasks.append(task)
@@ -119,14 +119,14 @@ if __name__=="__main__":
    start = time.time()
 
    # Setup list_feds
-   url = 'https://technical.edugain.org/api.php?action=list_feds&opt=1'
-   filename = "/tmp/data/list_feds.txt"
-   list_feds = getListFeds(url, filename)
+   url = ECCSLISTFEDSURL
+   dest_file = ECCS2LISTFEDSFILE
+   list_feds = getListFeds(url, dest_file)
 
    # Setup list_eccs_idps
-   url = 'https://technical.edugain.org/api.php?action=list_eccs_idps'
-   filename = "/tmp/data/list_eccs_idps.txt"
-   list_eccs_idps = getListEccsIdps(url, filename)
+   url = ECCS2LISTIDPSURL
+   dest_file = ECCS2LISTIDPSFILE
+   list_eccs_idps = getListEccsIdps(url, dest_file)
 
    stdout_file = open(ECCS2STDOUT,"w+")
    stderr_file = open(ECCS2STDERR,"w+")
@@ -148,7 +148,6 @@ if __name__=="__main__":
          count = count + 1
  
       asyncio.run(main(proc_list,stdout_file,stderr_file))
-#      asyncio.run(main(cmd_list,stdout_file,stderr_file))
 
    end = time.time()
-   print("Time taken in seconds - ", end - start)
+   print("Time taken in hh:mm:ss - %s", str(datetime.timedelta(seconds=end - start)))

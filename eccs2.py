@@ -9,11 +9,12 @@ import re
 import requests
 
 from datetime import date
-from eccs2properties import ECCS2LOGSPATH, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, FEDS_BLACKLIST, IDPS_BLACKLIST
+from eccs2properties import ECCS2LOGSPATH, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import WebDriverException
@@ -44,70 +45,52 @@ def checkIdP(sp,idp,logger,driver):
    try:
       driver.get(sp)
       driver.find_element_by_id("idpSelectInput").send_keys(idp['entityID'] + Keys.ENTER)
+      page_source = driver.page_source
+      status_code = requests.get(driver.current_url, verify=False).status_code
 
    except TimeoutException as e:
      logger.info("%s;%s;999;TIMEOUT" % (idp['entityID'],sp))
      return "TIMEOUT"
 
-   except WebDriverException as e:
-     print("!!! WEB DRIVER EXCEPTION !!!")
+   except NoSuchElementException as e:
+     logger.info("%s;%s;888;NoSuchElement" % (idp['entityID'],sp))
+     print("!!! NO SUCH ELEMENT EXCEPTION !!!")
      raise e
+
+   except WebDriverException as e:
+     logger.info("%s;%s;777;ConnectionError" % (idp['entityID'],sp))
+     print("!!! WEB DRIVER EXCEPTION !!!")
+     print(e.__str__())
+     return "ERROR"
+
+   except requests.exceptions.ConnectionError as e:
+      logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
+      return "ERROR"
+
+   except requests.exceptions.TooManyRedirects as e:
+      logger.info("%s;%s;111;TooManyRedirects" % (idp['entityID'],sp))
+      return "ERROR"
+
+   except requests.exceptions.RequestException as e:
+      logger.info("%s;%s;222;ConnectionError" % (idp['entityID'],sp))
+      print ("!!! REQUESTS EXCEPTION !!!")
+      print(e.__str__())
+      return "ERROR"
 
    except Exception as e:
+     logger.info("%s;%s;555;ConnectionError" % (idp['entityID'],sp))
      print ("!!! EXCEPTION !!!")
-     raise e
-
-
-   """
-   except MaxRetryError as e:
-     logger.info("%s;%s;111;MaxRetryError" % (idp['entityID'],sp))
-     return "MaxRetryError"
-
-   except ConnectionRefusedError as e:
-     logger.info("%s;%s;222;ConnectionRefusedError" % (idp['entityID'],sp))
-     return "ConnectionRefusedError"
-
-   except ConnectionError as e:
-     logger.info("%s;%s;333;ConnectionError" % (idp['entityID'],sp))
-     return "ConnectionError"
-
-   except NoSuchElementException as e:
-     print("!!! NO SUCH ELEMENT EXCEPTION !!!")
      print(e.__str__())
-     pass
-   """
-
-   """
-     if "ConnectionRefusedError" in e.__str__():
-        logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
-        return "ConnectionRefusedError"
-     elif "Connection Refused" in e.__str__():
-        logger.info("%s;%s;000;ConnectionRefused" % (idp['entityID'],sp))
-        return "Connection-Refused"
-     else:
-        print("!!! UN-HANDLE WEB DRIVER EXCEPTION !!!")
-        raise e
-   """
+     return "ERROR"
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
    pattern_username = '<input[\s]+[^>]*((type=\s*[\'"](text|email)[\'"]|user)|(name=\s*[\'"](name)[\'"]))[^>]*>';
    pattern_password = '<input[\s]+[^>]*(type=\s*[\'"]password[\'"]|password)[^>]*>';
 
-   metadata_not_found = re.search(pattern_metadata,driver.page_source, re.I)
-   username_found = re.search(pattern_username,driver.page_source, re.I)
-   password_found = re.search(pattern_password,driver.page_source, re.I)
-
-   try:
-      r = requests.get(driver.current_url, verify=False)
-      status_code = r.status_code
-
-   except requests.exceptions.ConnectionError as e:
-      logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
-      return "Connection-Error"
-   except requests.exceptions.RequestException as e:
-      print("!!! UN-HANDLE REQUEST EXCEPTION !!!")
-      raise SystemExit(e)
+   metadata_not_found = re.search(pattern_metadata,page_source, re.I)
+   username_found = re.search(pattern_username,page_source, re.I)
+   password_found = re.search(pattern_password,page_source, re.I)
 
    if(metadata_not_found):
       #print("MD-NOT-FOUND - driver.current_url: %s" % (driver.current_url))
@@ -159,10 +142,13 @@ def getIdPContacts(idp,contactType):
    for ctcType in idp['contacts']:
       if (ctcType == contactType):
          for ctc in idp['contacts'][contactType]:
-            if (ctc['emailOrPhone'].get('EmailAddress')):
-               ctcList.append(ctc['emailOrPhone']['EmailAddress'][0])
+            if (ctc.get('emailOrPhone')):
+               if (ctc['emailOrPhone'].get('EmailAddress')):
+                  ctcList.append(ctc['emailOrPhone']['EmailAddress'][0])
+               else:
+                  ctcList.append('missing email')
             else:
-               ctcList.append('missing')
+               ctcList.append('missing email')
 
    return ctcList
 
@@ -244,9 +230,11 @@ if __name__=="__main__":
    chrome_options.add_argument('--start-maximized')
    chrome_options.add_argument('--disable-extensions')
 
-   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=%s' % ECCS2SELENIUMLOG])
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=./selenium_chromedriver.log'])
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options)
+   LOGGER.setLevel(ECCS2SELENIUMLOGLEVEL)
+
+   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-level=%d' % ECCS2SELENIUMLOGLEVEL, '--log-path=%s' % ECCS2SELENIUMLOG])
+   # Utility for DEBUG
+   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s' % ECCS2SELENIUMLOG])
 
    # Configure timeouts: 30 sec
    driver.set_page_load_timeout(30)
@@ -254,10 +242,10 @@ if __name__=="__main__":
 
    checkIdp(idp,sps,eccs2log,eccs2checksLog,driver)
 
-   driver.delete_all_cookies()
+   #driver.delete_all_cookies()
    driver.close()
    driver.quit()
 
-   # Kill process to release resources and to avoid zombies
-#   pid = os.getpid()
-#   os.kill(pid, signal.SIGTERM)
+   # Kill process to release resources and to avoid zombies - this reaise an issue
+   #pid = os.getpid()
+   #os.kill(pid, signal.SIGTERM)
