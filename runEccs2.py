@@ -119,7 +119,7 @@ if __name__=="__main__":
    start = time.time()
 
    # Setup list_feds
-   url = ECCSLISTFEDSURL
+   url = ECCS2LISTFEDSURL
    dest_file = ECCS2LISTFEDSFILE
    list_feds = getListFeds(url, dest_file)
 
