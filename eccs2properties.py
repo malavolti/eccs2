@@ -34,7 +34,7 @@ ECCS2SELENIUMPAGELOADTIMEOUT = 30
 ECCS2SELENIUMSCRIPTTIMEOUT = 30
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 15
+ECCS2NUMPROCESSES = 30
 
 # Registration Authority of Federations to exclude from the check
 FEDS_BLACKLIST = [

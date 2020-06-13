@@ -9,11 +9,13 @@ import re
 import requests
 
 from datetime import date
-from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
+from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOGDIR, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
@@ -46,7 +48,8 @@ def checkIdP(sp,idp,logger,driver):
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
       driver.get(sp)
-      driver.find_element_by_id("idpSelectInput").send_keys(idp['entityID'] + Keys.ENTER)
+      element = WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID,"idpSelectInput"))) 
+      element.send_keys(idp['entityID'] + Keys.ENTER)
       page_source = driver.page_source
       status_code = requests.get(driver.current_url, verify=False).status_code
 
@@ -59,13 +62,8 @@ def checkIdP(sp,idp,logger,driver):
      # If I don't return anything and I don't put anything in the logger
      # I'll not write on the input files for the table
      # and I can re-run the command that caused the exception from the "stdout.log" file.
-     print("!!! NO SUCH ELEMENT EXCEPTION !!!")
-     import selenium.webdriver.support.ui as ui
-     wait = ui.WebDriverWait(driver,10)
-     wait.until(lambda driver: driver.find_element_by_id("idpSelectInput"))
-     driver.find_element_by_id("idpSelectInput").send_keys(idp['entityID'] + Keys.ENTER)
-     page_source = driver.page_source
-     status_code = requests.get(driver.current_url, verify=False).status_code
+     print("!!! NO SUCH ELEMENT EXCEPTION - RUN AGAIN THE COMMAND !!!")
+     return None
 
    except UnexpectedAlertPresentException as e:
      logger.info("%s;%s;888;UnexpectedAlertPresent" % (idp['entityID'],sp))
@@ -256,7 +254,7 @@ if __name__=="__main__":
    checkIdp(idp,sps,eccs2log,eccs2checksLog,driver)
 
    #driver.delete_all_cookies()
-   #driver.close()
+   driver.close()
    driver.quit()
 
    # Kill process to release resources and to avoid zombies - this reaise an issue
