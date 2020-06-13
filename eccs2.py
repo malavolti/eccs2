@@ -9,7 +9,7 @@ import re
 import requests
 
 from datetime import date
-from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOGDIR, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
+from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOGDIR, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT, ECCS2SPS
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -176,7 +176,7 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
       if (result[0] == result[1] == "OK"):
          # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-status-1;SP-entityID-2;SP-status-2
          eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-             idp['displayname'].split(';')[1].split('==')[0],
+             idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
@@ -188,7 +188,7 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
              result[1]))
       elif (result[0] == result[1] == "DISABLED"):
          eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-             idp['displayname'].split(';')[1].split('==')[0],
+             idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
@@ -203,7 +203,7 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
           return
       else:
          eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-             idp['displayname'].split(';')[1].split('==')[0],
+             idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
@@ -220,7 +220,7 @@ if __name__=="__main__":
    eccs2log = getLogger(ECCS2RESULTSLOG, ECCS2LOGSDIR, "INFO")
    eccs2checksLog = getLogger(ECCS2CHECKSLOG, ECCS2LOGSDIR, "INFO")
 
-   sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
+   sps = ECCS2SPS
 
    parser = argparse.ArgumentParser(description='Checks if the input IdP consumed correctly eduGAIN metadata by accessing two different SPs')
    parser.add_argument("idpJson", metavar="idpJson", nargs=1, help="An IdP in Json format")
@@ -243,7 +243,7 @@ if __name__=="__main__":
 
    #driver = webdriver.Chrome('chromedriver', options=chrome_options)
 
-   # For DEBUG only
+   # For DEBUG only (By default ChromeDriver logs only warnings/errors to stderr. When debugging issues, it is helpful to enable more verbose logging.)
    #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
    driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
 
@@ -254,7 +254,7 @@ if __name__=="__main__":
    checkIdp(idp,sps,eccs2log,eccs2checksLog,driver)
 
    #driver.delete_all_cookies()
-   driver.close()
+   driver.close() # I need to use "close()" or the driver's process remains active
    driver.quit()
 
    # Kill process to release resources and to avoid zombies - this reaise an issue

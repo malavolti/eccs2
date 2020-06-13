@@ -3,13 +3,12 @@
 import logging
 import re
 
-from eccs2properties import DAY
+from eccs2properties import DAY,ECCS2LOGSDIR
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from json import dumps, loads
 from logging.handlers import RotatingFileHandler
 from pathlib import PurePath
-
 
 app = Flask(__name__)
 api = Api(app)
@@ -163,7 +162,7 @@ class EccsResults(Resource):
 
        if 'date' in request.args:
           app.logger.info("'date' parameter inserted")
-          file_path = "logs/eccs2_"+request.args['date']+".log"
+          file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,DAY)
           date = request.args['date']
        if 'pretty' in request.args:
           app.logger.info("'pretty' parameter inserted")
@@ -318,5 +317,5 @@ api.add_resource(EccsResults, '/eccs/eccsresults') # Route_3
 if __name__ == '__main__':
    
    app.config['JSON_AS_ASCII'] = False
-   app.logger = getLogger("logs/eccs2api.log","INFO")
+   app.logger = getLogger("eccs2api.log", "INFO", ECCS2LOGSDIR)
    app.run(port='5002')

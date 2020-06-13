@@ -53,8 +53,13 @@ $(document).ready(function() {
               "data": "contacts.technical",
               "defaultContent": ""
             },
-            { "data": "date" },
-            { "data": "status" }
+            { "data": "date",
+              "width": "180px",
+              "className": "dt-body-center"
+            },
+            { "data": "status",
+              "className": "dt-body-center"
+            }
         ],
         "rowCallback": function( row, data, index ) {
           if (data.status == "ERROR") {

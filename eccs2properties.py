@@ -21,20 +21,15 @@ ECCS2SELENIUMLOGDIR = "%s/selenium-logs" % ECCS2DIR
 ECCS2STDOUT = "%s/stdout.log" % ECCS2LOGSDIR
 ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSDIR
 
-# Selenium Log Levels
-# 0: All     (Show all log messages)
-# 1: Debug   (Show messages with information useful for debugging)
-# 2: Info    (Show informational messages)
-# 3: Warning (Show messages corresponding to non-critical issues)
-# 4: Severe  (Show messages corresponding to critical issues)
-# 5: Off     (Show no log messages)
-ECCS2SELENIUMLOGLEVEL = 4 
-
+# Selenium Timeouts (in seconds)
 ECCS2SELENIUMPAGELOADTIMEOUT = 30
 ECCS2SELENIUMSCRIPTTIMEOUT = 30
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 30
+ECCS2NUMPROCESSES = 20
+
+# The 2 SPs that will be used to test each IdP
+ECCS2SPS = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
 # Registration Authority of Federations to exclude from the check
 FEDS_BLACKLIST = [
