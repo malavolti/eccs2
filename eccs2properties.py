@@ -2,24 +2,24 @@
 
 from datetime import date
 
-day = date.today().isoformat()
+DAY = date.today().isoformat()
 
-ECCS2PATH = "/opt/eccs2"
-ECCS2LOGSPATH = "%s/logs" % ECCS2PATH
-ECCS2INPUTPATH = "%s/input" % ECCS2PATH
+ECCS2DIR = "/opt/eccs2"
+ECCS2LOGSDIR = "%s/logs" % ECCS2DIR
+ECCS2INPUTDIR = "%s/input" % ECCS2DIR
 
 # Input
 ECCS2LISTIDPSURL = 'https://technical.edugain.org/api.php?action=list_eccs_idps&format=json'
-ECCS2LISTIDPSFILE = "%s/list_eccs_idps.json" % ECCS2INPUTPATH
+ECCS2LISTIDPSFILE = "%s/list_eccs_idps.json" % ECCS2INPUTDIR
 ECCS2LISTFEDSURL = 'https://technical.edugain.org/api.php?action=list_feds&opt=1&format=json' 
-ECCS2LISTFEDSFILE = "%s/list_fed.json" % ECCS2INPUTPATH
+ECCS2LISTFEDSFILE = "%s/list_fed.json" % ECCS2INPUTDIR
 
 # Output
-ECCS2RESULTSLOG = "eccs2_%s.log" % day
-ECCS2CHECKSLOG = "eccs2checks_%s.log" % day
-ECCS2SELENIUMLOG = "%s/selenium_chromedriver.log" % ECCS2LOGSPATH
-ECCS2STDOUT = "%s/stdout.log" % ECCS2LOGSPATH
-ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSPATH
+ECCS2RESULTSLOG = "eccs2_%s.log" % DAY
+ECCS2CHECKSLOG = "eccs2checks_%s.log" % DAY
+ECCS2SELENIUMLOGDIR = "%s/selenium-logs" % ECCS2DIR
+ECCS2STDOUT = "%s/stdout.log" % ECCS2LOGSDIR
+ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSDIR
 
 # Selenium Log Levels
 # 0: All     (Show all log messages)
@@ -29,6 +29,9 @@ ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSPATH
 # 4: Severe  (Show messages corresponding to critical issues)
 # 5: Off     (Show no log messages)
 ECCS2SELENIUMLOGLEVEL = 4 
+
+ECCS2SELENIUMPAGELOADTIMEOUT = 30
+ECCS2SELENIUMSCRIPTTIMEOUT = 30
 
 # Number of processes to run in parallel
 ECCS2NUMPROCESSES = 15

@@ -9,7 +9,7 @@ import re
 import requests
 
 from datetime import date
-from eccs2properties import ECCS2LOGSPATH, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST
+from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2SELENIUMLOG, ECCS2SELENIUMLOGLEVEL, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,7 +18,9 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import UnexpectedAlertPresentException
 from urllib3.exceptions import MaxRetryError
+from urllib3.util import parse_url
 
 
 """
@@ -49,39 +51,47 @@ def checkIdP(sp,idp,logger,driver):
       status_code = requests.get(driver.current_url, verify=False).status_code
 
    except TimeoutException as e:
-     logger.info("%s;%s;999;TIMEOUT" % (idp['entityID'],sp))
-     return "TIMEOUT"
+     logger.info("%s;%s;999;Timeout" % (idp['entityID'],sp))
+     return "Timeout"
 
    except NoSuchElementException as e:
-     logger.info("%s;%s;888;NoSuchElement" % (idp['entityID'],sp))
+     # The input of the bootstrap tables are provided by "eccs2" and "eccs2checks" log.
+     # If I don't return anything and I don't put anything in the logger
+     # I'll not write on the input files for the table
+     # and I can re-run the command that caused the exception from the "stdout.log" file.
      print("!!! NO SUCH ELEMENT EXCEPTION !!!")
-     raise e
+     import selenium.webdriver.support.ui as ui
+     wait = ui.WebDriverWait(driver,10)
+     wait.until(lambda driver: driver.find_element_by_id("idpSelectInput"))
+     driver.find_element_by_id("idpSelectInput").send_keys(idp['entityID'] + Keys.ENTER)
+     page_source = driver.page_source
+     status_code = requests.get(driver.current_url, verify=False).status_code
+
+   except UnexpectedAlertPresentException as e:
+     logger.info("%s;%s;888;UnexpectedAlertPresent" % (idp['entityID'],sp))
+     return "ERROR"
 
    except WebDriverException as e:
-     logger.info("%s;%s;777;ConnectionError" % (idp['entityID'],sp))
-     print("!!! WEB DRIVER EXCEPTION !!!")
-     print(e.__str__())
-     return "ERROR"
+     print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
+     return None
 
    except requests.exceptions.ConnectionError as e:
-      logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
-      return "ERROR"
+     logger.info("%s;%s;000;ConnectionError" % (idp['entityID'],sp))
+     return "ERROR"
 
    except requests.exceptions.TooManyRedirects as e:
-      logger.info("%s;%s;111;TooManyRedirects" % (idp['entityID'],sp))
-      return "ERROR"
+     logger.info("%s;%s;111;TooManyRedirects" % (idp['entityID'],sp))
+     return "ERROR"
 
    except requests.exceptions.RequestException as e:
-      logger.info("%s;%s;222;ConnectionError" % (idp['entityID'],sp))
-      print ("!!! REQUESTS EXCEPTION !!!")
-      print(e.__str__())
-      return "ERROR"
+     print ("!!! REQUESTS EXCEPTION !!!")
+     print (e.__str__())
+     return None
 
    except Exception as e:
-     logger.info("%s;%s;555;ConnectionError" % (idp['entityID'],sp))
      print ("!!! EXCEPTION !!!")
-     print(e.__str__())
-     return "ERROR"
+     print (e.__str__())
+     return None
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
@@ -190,6 +200,9 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
              result[0],
              sps[1],
              result[1]))
+      elif (result[0] == None or result[1] == None):
+          # Do nothing
+          return
       else:
          eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
              idp['displayname'].split(';')[1].split('==')[0],
@@ -206,8 +219,8 @@ def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
 # MAIN
 if __name__=="__main__":
 
-   eccs2log = getLogger(ECCS2RESULTSLOG, ECCS2LOGSPATH, "INFO")
-   eccs2checksLog = getLogger(ECCS2CHECKSLOG, ECCS2LOGSPATH, "INFO")
+   eccs2log = getLogger(ECCS2RESULTSLOG, ECCS2LOGSDIR, "INFO")
+   eccs2checksLog = getLogger(ECCS2CHECKSLOG, ECCS2LOGSDIR, "INFO")
 
    sps = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
 
@@ -230,20 +243,20 @@ if __name__=="__main__":
    chrome_options.add_argument('--start-maximized')
    chrome_options.add_argument('--disable-extensions')
 
-   LOGGER.setLevel(ECCS2SELENIUMLOGLEVEL)
+   #driver = webdriver.Chrome('chromedriver', options=chrome_options)
 
-   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-level=%d' % ECCS2SELENIUMLOGLEVEL, '--log-path=%s' % ECCS2SELENIUMLOG])
-   # Utility for DEBUG
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s' % ECCS2SELENIUMLOG])
+   # For DEBUG only
+   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
+   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
 
-   # Configure timeouts: 30 sec
-   driver.set_page_load_timeout(30)
-   driver.set_script_timeout(30)
+   # Configure timeouts
+   driver.set_page_load_timeout("%d" % ECCS2SELENIUMPAGELOADTIMEOUT)
+   driver.set_script_timeout("%d" % ECCS2SELENIUMSCRIPTTIMEOUT)
 
    checkIdp(idp,sps,eccs2log,eccs2checksLog,driver)
 
    #driver.delete_all_cookies()
-   driver.close()
+   #driver.close()
    driver.quit()
 
    # Kill process to release resources and to avoid zombies - this reaise an issue

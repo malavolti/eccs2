@@ -9,7 +9,7 @@ import requests
 import sys
 import time
 
-from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2PATH, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
+from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
 from subprocess import Popen,PIPE
 
 # Returns a Dict on "{ nameFed:reg_auth }"
@@ -138,7 +138,7 @@ if __name__=="__main__":
       idpJsonList = getIdpList(list_eccs_idps,regAuth)
 
       num_idps = len(idpJsonList)
-      cmd_list = [["%s/eccs2.py \'%s\'" % (ECCS2PATH, json.dumps(idp))] for idp in idpJsonList]
+      cmd_list = [["%s/eccs2.py \'%s\'" % (ECCS2DIR, json.dumps(idp))] for idp in idpJsonList]
 
       proc_list = []
       count = 0
@@ -150,4 +150,4 @@ if __name__=="__main__":
       asyncio.run(main(proc_list,stdout_file,stderr_file))
 
    end = time.time()
-   print("Time taken in hh:mm:ss - %s", str(datetime.timedelta(seconds=end - start)))
+   print("Time taken in hh:mm:ss - ", str(datetime.timedelta(seconds=end - start)))

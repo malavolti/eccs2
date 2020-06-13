@@ -1,14 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 
-from flask import Flask, request
+import logging
+import re
+
+from eccs2properties import DAY
+from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from json import dumps, loads
-from flask import jsonify
-from pathlib import PurePath
-import logging
 from logging.handlers import RotatingFileHandler
-import re
-import eccs2properties
+from pathlib import PurePath
 
 
 app = Flask(__name__)
@@ -52,8 +52,8 @@ def setup():
    driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
 
    # Configure timeouts
-   driver.set_page_load_timeout(45)
-   driver.set_script_timeout(45)
+   driver.set_page_load_timeout(30)
+   driver.set_script_timeout(30)
 
    return driver
 
@@ -68,7 +68,7 @@ class Checks(Resource):
     def get(self):
        app.logger.info("Request 'Checks'")
 
-       file_path = "logs/eccs2checks_%s.log" % eccs2properties.day
+       file_path = "%s/eccs2checks_%s.log" % (ECCS2LOGSDIR,DAY) 
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None 
@@ -76,8 +76,8 @@ class Checks(Resource):
 
        if 'date' in request.args:
           app.logger.info("'date' parameter inserted")
-          file_path = "logs/eccs2checks_"+request.args['date']+".log"
           date = request.args['date']
+          file_path = "%s/eccs2checks_%s.log" % (ECCS2LOGSDIR,date)
        if 'pretty' in request.args:
           app.logger.info("'pretty' parameter inserted")
           pretty = request.args['pretty']
@@ -155,7 +155,7 @@ class EccsResults(Resource):
     def get(self):
        app.logger.info("Request 'EccsResults'")
 
-       file_path = "logs/eccs2_%s.log" % eccs2properties.day
+       file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,DAY) 
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None
