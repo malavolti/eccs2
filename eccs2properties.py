@@ -40,4 +40,21 @@ FEDS_BLACKLIST = [
 
 # EntityID of IDPs to exclude from the check
 IDPS_BLACKLIST = [
+   'https://iif.iucc.ac.il/idp/saml2/idp/metadata.php',
+   'https://login.lstonline.ac.uk/idp/pingfederate',
+   'https://idp.pearsoncollege.com/openathens',
+   'https://idp.cambria.ac.uk/openathens',
+   'https://idp.wnsc.ac.uk/idp/shibboleth',
+   'https://indiid.net/idp/shibboleth',
+   'https://idp.nulc.ac.uk/openathens',
+   'https://lc-idp.lincolncollege.ac.uk/shibboleth',
+   'https://oa-idp.wlv.ac.uk/oala/metadata',
+   'https://idp.uel.ac.uk/shibboleth',
+   'https://idp.ucreative.ac.uk/shibboleth',
+   'https://idp.llandrillo.ac.uk/shibboleth',
+   'https://idp-dev.cardiff.ac.uk/idp/shibboleth',
+   'https://idp.kingston.ac.uk/shibboleth',   # iframe to load
+   'https://shibboleth.aber.ac.uk/shibboleth',
+   'https://sso.vu.lt/SSO/saml2/idp/metadata.php', # no standard login page
+   'urn:mace:federation.org.au:testfed:uq.edu.au'
 ]
