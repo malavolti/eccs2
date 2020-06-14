@@ -36,6 +36,8 @@ $(document).ready(function() {
            "url": "data.json",
            "dataSrc": ""
         },
+        "lengthMenu": [[10, 20, 30, 40, 50, 100, -1], [10, 20, 30, 40, 50, 100, "All"]],
+        "autoWidth": false,
         "columns": [
             {
               "className":      'details-control',
@@ -50,14 +52,12 @@ $(document).ready(function() {
             { "data": "entityID" },
             { "data": "registrationAuthority" },
             { 
-              "data": "contacts.technical",
-              "defaultContent": ""
-            },
-            { "data": "date",
+              "data": "date",
               "width": "180px",
               "className": "dt-body-center"
             },
-            { "data": "status",
+            { 
+              "data": "status",
               "className": "dt-body-center"
             }
         ],
@@ -91,4 +91,15 @@ $(document).ready(function() {
             tr.addClass('shown');
         }
     } );
+
+    $('input:checkbox').on('change', function () {
+       //build a regex filter string with an or(|) condition
+       var sts = $('input:checkbox[name="status"]:checked').map(function() {
+          return this.value;
+       }).get().join('|');
+
+       //filter in column 5, with an regex, no smart filtering, not case sensitive
+       table.column(5).search(sts, true, false, false).draw(false);
+    });
+
 } );
