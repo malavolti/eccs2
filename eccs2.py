@@ -13,14 +13,10 @@ from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, ECCS2
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.remote_connection import LOGGER
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import WebDriverException
-from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, UnexpectedAlertPresentException
 from urllib3.exceptions import MaxRetryError
 from urllib3.util import parse_url
 
@@ -31,7 +27,28 @@ from urllib3.util import parse_url
   The check will be passed when both SPs will return the authentication page of the IdP checked.
 """
 
-def checkIdP(sp,idp,logger,driver):
+#def checkIdP(sp,idp,logger,driver):
+def checkIdP(sp,idp,logger):
+   # Chromedriver MUST be instanced here to avoid problems with SESSION
+
+   # Disable SSL requests warning messages
+   requests.packages.urllib3.disable_warnings()
+
+   # Configure Web-driver
+   chrome_options = webdriver.ChromeOptions()
+   chrome_options.add_argument('--headless')
+   chrome_options.add_argument('--no-sandbox')
+   chrome_options.add_argument('--disable-dev-shm-usage')
+   chrome_options.add_argument('--ignore-certificate-errors')
+
+   driver = webdriver.Chrome('chromedriver', options=chrome_options)
+
+   # For DEBUG only (By default ChromeDriver logs only warnings/errors to stderr. When debugging issues, it is helpful to enable more verbose logging.)
+   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
+
+   # Configure timeouts
+   driver.set_page_load_timeout("%d" % ECCS2SELENIUMPAGELOADTIMEOUT)
+   driver.set_script_timeout("%d" % ECCS2SELENIUMSCRIPTTIMEOUT)
 
    # Configure Blacklists
    federation_blacklist = FEDS_BLACKLIST
@@ -52,6 +69,7 @@ def checkIdP(sp,idp,logger,driver):
       element.send_keys(idp['entityID'] + Keys.ENTER)
       page_source = driver.page_source
       status_code = requests.get(driver.current_url, verify=False).status_code
+      driver.quit()
 
    except TimeoutException as e:
      logger.info("%s;%s;999;Timeout" % (idp['entityID'],sp))
@@ -71,6 +89,7 @@ def checkIdP(sp,idp,logger,driver):
 
    except WebDriverException as e:
      print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
+     print (e.__str__())
      return None
 
    except requests.exceptions.ConnectionError as e:
@@ -91,6 +110,9 @@ def checkIdP(sp,idp,logger,driver):
      print (e.__str__())
      return None
 
+   finally:
+     driver.quit()
+
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
    pattern_username = '<input[\s]+[^>]*((type=\s*[\'"](text|email)[\'"]|user)|(name=\s*[\'"](name)[\'"]))[^>]*>';
@@ -101,15 +123,12 @@ def checkIdP(sp,idp,logger,driver):
    password_found = re.search(pattern_password,page_source, re.I)
 
    if(metadata_not_found):
-      #print("MD-NOT-FOUND - driver.current_url: %s" % (driver.current_url))
       logger.info("%s;%s;%s;No-eduGAIN-Metadata" % (idp['entityID'],sp,status_code))
       return "No-eduGAIN-Metadata"
    elif not username_found or not password_found:
-      #print("INVALID-FORM - entityID: %s, sp: %s, driver.current_url: %s" % (idp['entityID'],sp,driver.current_url))
       logger.info("%s;%s;%s;Invalid-Form" % (idp['entityID'],sp,status_code))
       return "Invalid-Form"
    else:
-      #print("MD-FOUND - driver.current_url: %s" % (driver.current_url))
       logger.info("%s;%s;%s;OK" % (idp['entityID'],sp,status_code))
       return "OK"
 
@@ -160,10 +179,10 @@ def getIdPContacts(idp,contactType):
 
    return ctcList
 
-def checkIdp(idp,sps,eccs2log,eccs2checksLog,driver):
+def checkIdp(idp,sps,eccs2log,eccs2checksLog):
       result = []
       for sp in sps:
-         resultCheck = checkIdP(sp,idp,eccs2checksLog,driver)
+         resultCheck = checkIdP(sp,idp,eccs2checksLog)
          result.append(resultCheck)
 
       listTechContacts = getIdPContacts(idp,'technical')
@@ -229,34 +248,4 @@ if __name__=="__main__":
 
    idp = json.loads(args.idpJson[0])
 
-   # Disable SSL requests warning messages
-   requests.packages.urllib3.disable_warnings()
-
-   # Configure Web-driver
-   chrome_options = webdriver.ChromeOptions()
-   chrome_options.add_argument('--headless')
-   chrome_options.add_argument('--no-sandbox')
-   chrome_options.add_argument('--disable-dev-shm-usage')
-   chrome_options.add_argument('--ignore-certificate-errors')
-   chrome_options.add_argument('--start-maximized')
-   chrome_options.add_argument('--disable-extensions')
-
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options)
-
-   # For DEBUG only (By default ChromeDriver logs only warnings/errors to stderr. When debugging issues, it is helpful to enable more verbose logging.)
-   #driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
-   driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, parse_url(idp['entityID'])[2])])
-
-   # Configure timeouts
-   driver.set_page_load_timeout("%d" % ECCS2SELENIUMPAGELOADTIMEOUT)
-   driver.set_script_timeout("%d" % ECCS2SELENIUMSCRIPTTIMEOUT)
-
-   checkIdp(idp,sps,eccs2log,eccs2checksLog,driver)
-
-   #driver.delete_all_cookies()
-   driver.close() # I need to use "close()" or the driver's process remains active
-   driver.quit()
-
-   # Kill process to release resources and to avoid zombies - this reaise an issue
-   #pid = os.getpid()
-   #os.kill(pid, signal.SIGTERM)
+   checkIdp(idp,sps,eccs2log,eccs2checksLog)
