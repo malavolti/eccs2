@@ -162,8 +162,8 @@ class EccsResults(Resource):
 
        if 'date' in request.args:
           app.logger.info("'date' parameter inserted")
-          file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,DAY)
           date = request.args['date']
+          file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,date)
        if 'pretty' in request.args:
           app.logger.info("'pretty' parameter inserted")
           pretty = request.args['pretty']
