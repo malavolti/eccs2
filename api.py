@@ -189,12 +189,12 @@ class EccsResults(Resource):
           # Status;                          check[5]
           # SP-entityID-1;                   check[6]
           # SP-check-time-1;                 check[7]
-          # SP-status-1;                     check[8]
-          # SP-status-code-1;                check[9]
+          # SP-status-code-1;                check[8]
+          # SP-status-1;                     check[9]
           # SP-entityID-2;                   check[10]
           # SP-check-time-2;                 check[11]
-          # SP-status-2                      check[12]
-          # SP-status-code-2                 check[13]
+          # SP-status-code-2                 check[12]
+          # SP-status-2                      check[13]
           check = line.split(";")
 
           idp_displayname = check[0].rstrip("\n\r")
@@ -205,12 +205,12 @@ class EccsResults(Resource):
           idp_checks_status = check[5].rstrip("\n\r")
           sp1_entity_id = check[6].rstrip("\n\r")
           sp1_check_time = check[7].rstrip("\n\r")
-          sp1_check_status = check[8].rstrip("\n\r")
-          sp1_status_code = check[9].rstrip("\n\r")
+          sp1_status_code = check[8].rstrip("\n\r")
+          sp1_check_status = check[9].rstrip("\n\r")
           sp2_entity_id = check[10].rstrip("\n\r")
           sp2_check_time = check[11].rstrip("\n\r")
-          sp2_check_status = check[12].rstrip("\n\r")
-          sp2_status_code = check[13].rstrip("\n\r")
+          sp2_status_code = check[12].rstrip("\n\r")
+          sp2_check_status = check[13].rstrip("\n\r")
 
           if (idp and status):
               app.logger.info("Results for the idp '%s' with status '%s'" % (idp, status))
