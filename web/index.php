@@ -20,8 +20,11 @@
       <input type="checkbox" name="status" value="DISABLE">DISABLE
     </div>
     <hr>
+    <button id="btn-show-all-children" type="button">Expand All</button>
+    <button id="btn-hide-all-children" type="button">Collapse All</button>
+    <hr>
     <div class="container">
-      <table id="eccstable" class="display compact" style="width:100%">
+      <table id="eccstable" class="cell-border" style="width:100%">
         <thead>
             <tr>
                 <th></th>

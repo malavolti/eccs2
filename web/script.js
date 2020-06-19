@@ -1,31 +1,32 @@
 /* Formatting function for row details - modify as you need */
 function format ( d ) {
     // `d` is the original data object for the row
-    return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+    return '<table id="inner-table">'+
         '<tr>'+
             '<td>IdP DisplayName:</td>'+
             '<td>'+d.displayName+'</td>'+
-            '<td></td>'+
         '</tr>'+
         '<tr>'+
             '<td>Technical Contacts:</td>'+
             '<td>'+d.contacts.technical+'</td>'+
-            '<td></td>'+
         '</tr>'+
         '<tr>'+
             '<td>Support Contacts:</td>'+
             '<td>'+d.contacts.support+'</td>'+
-            '<td></td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP1:</td>'+
             '<td>'+d.sp1.entityID+'</td>'+
+            '<td>'+d.sp1.checkTime+'</td>'+
             '<td>'+d.sp1.status+'</td>'+
+            '<td>'+d.sp1.statusCode+'</td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP2:</td>'+
             '<td>'+d.sp2.entityID+'</td>'+
+            '<td>'+d.sp2.checkTime+'</td>'+
             '<td>'+d.sp2.status+'</td>'+
+            '<td>'+d.sp2.statusCode+'</td>'+
         '</tr>'+
     '</table>';
 }
@@ -101,5 +102,31 @@ $(document).ready(function() {
        //filter in column 5, with an regex, no smart filtering, not case sensitive
        table.column(5).search(sts, true, false, false).draw(false);
     });
+
+    // Handle click on "Expand All" button
+    $('#btn-show-all-children').on('click', function(){
+        // Enumerate all rows
+        table.rows().every(function(){
+            // If row has details collapsed
+            if(!this.child.isShown()){
+                // Open this row
+                this.child(format(this.data())).show();
+                $(this.node()).addClass('shown');
+            }
+        });
+    });
+
+    // Handle click on "Collapse All" button
+    $('#btn-hide-all-children').on('click', function(){
+        // Enumerate all rows
+        table.rows().every(function(){
+            // If row has details expanded
+            if(this.child.isShown()){
+                // Collapse row details
+                this.child.hide();
+                $(this.node()).removeClass('shown');
+            }
+        });
+    });   
 
 } );

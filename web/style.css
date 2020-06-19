@@ -6,3 +6,12 @@ td.details-control {
 tr.shown td.details-control {
   background: url('./details_close.png') no-repeat center center;
 }
+
+#inner-table {
+ padding-left:40px; 
+ background-color:white;
+}
+
+#inner-table tr td{
+   border: 0;
+}

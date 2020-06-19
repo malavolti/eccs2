@@ -1,12 +1,12 @@
 #!/usr/bin/env python3.8
 
 import argparse
+import datetime
 import json
 import re
 import requests
 import time
 
-from datetime import date
 from eccs2properties import ECCS2LOGSDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -38,15 +38,18 @@ def checkIdP(sp,idp,logger):
    entities_blacklist = IDPS_BLACKLIST 
 
    if (idp['registrationAuthority'] in federation_blacklist):
-      logger.info("%s;%s;NULL;Federation excluded from checks" % (idp['entityID'],sp))
-      return "DISABLED"
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+      logger.info("%s;%s;%s;NULL;Federation excluded from checks" % (idp['entityID'],sp,check_time))
+      return (sp,check_time,"NULL","DISABLED")
 
    if (idp['entityID'] in entities_blacklist):
-      logger.info("%s;%s;NULL;IdP excluded from checks" % (idp['entityID'],sp))
-      return "DISABLED"
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+      logger.info("%s;%s;%s;NULL;IdP excluded from checks" % (idp['entityID'],sp,check_time))
+      return (sp,check_time,"NULL","DISABLED")
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
       driver.get(sp)
       element = WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID,"idpSelectInput"))) 
       element.send_keys(idp['entityID'] + Keys.ENTER)
@@ -54,8 +57,8 @@ def checkIdP(sp,idp,logger):
       samlrequest_url = driver.current_url
 
    except TimeoutException as e:
-     logger.info("%s;%s;999;Timeout" % (idp['entityID'],sp))
-     return "Timeout"
+     logger.info("%s;%s;%s;999;Timeout" % (idp['entityID'],sp,check_time))
+     return (sp,check_time,"999","Timeout")
 
    except NoSuchElementException as e:
      # The input of the bootstrap tables are provided by "eccs2" and "eccs2checks" log.
@@ -66,8 +69,8 @@ def checkIdP(sp,idp,logger):
      return None
 
    except UnexpectedAlertPresentException as e:
-     logger.info("%s;%s;888;UnexpectedAlertPresent" % (idp['entityID'],sp))
-     return "ERROR"
+     logger.info("%s;%s;%s;888;UnexpectedAlertPresent" % (idp['entityID'],sp,check_time))
+     return (sp,check_time,"888","ERROR")
 
    except WebDriverException as e:
      print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
@@ -101,42 +104,42 @@ def checkIdP(sp,idp,logger):
      #print("!!! REQUESTS STATUS CODE CONNECTION ERROR EXCEPTION !!!")
      #print (e.__str__())
      #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = 000
+     status_code = "000"
 
    except requests.exceptions.Timeout as e:
      #print("!!! REQUESTS STATUS CODE TIMEOUT EXCEPTION !!!")
      #print (e.__str__())
      #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = 111
+     status_code = "111"
 
    except requests.exceptions.TooManyRedirects as e:
      #print("!!! REQUESTS TOO MANY REDIRECTS EXCEPTION !!!")
      #print (e.__str__())
      #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = 222
+     status_code = "222"
 
    except requests.exceptions.RequestException as e:
      print ("!!! REQUESTS EXCEPTION !!!")
      print (e.__str__())
      print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = 333
+     status_code = "333"
 
    except Exception as e:
      print ("!!! EXCEPTION !!!")
      print (e.__str__())
      print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = 555
+     status_code = "555"
 
 
    if(metadata_not_found):
-      logger.info("%s;%s;%s;No-eduGAIN-Metadata" % (idp['entityID'],sp,status_code))
-      return "No-eduGAIN-Metadata"
+      logger.info("%s;%s;%s;%s;No-eduGAIN-Metadata" % (idp['entityID'],sp,status_code,check_time))
+      return (sp,check_time,status_code,"No-eduGAIN-Metadata")
    elif not username_found or not password_found:
-      logger.info("%s;%s;%s;Invalid-Form" % (idp['entityID'],sp,status_code))
-      return "Invalid-Form"
+      logger.info("%s;%s;%s;%s;Invalid-Form" % (idp['entityID'],sp,status_code,check_time))
+      return (sp,check_time,status_code,"Invalid-Form")
    else:
-      logger.info("%s;%s;%s;OK" % (idp['entityID'],sp,status_code))
-      return "OK"
+      logger.info("%s;%s;%s;%s;OK" % (idp['entityID'],sp,status_code,check_time))
+      return (sp,check_time,status_code,"OK")
 
 
 def check(idp,sps,eccs2log,eccs2checksLog):
@@ -152,46 +155,59 @@ def check(idp,sps,eccs2log,eccs2checksLog):
       strSuppContacts = ','.join(listSuppContacts)
 
       # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
-      if (result[0] == result[1] == "OK"):
-         # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-status-1;SP-entityID-2;SP-status-2
-         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+      if (result[0][3] == result[1][3] == "OK"):
+         # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
              idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
              strSuppContacts,
              'OK',
-             sps[0],
-             result[0],
-             sps[1],
-             result[1]))
-      elif (result[0] == result[1] == "DISABLED"):
-         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+             result[0][0],
+             result[0][1],
+             result[0][2],
+             result[0][3],
+             result[1][0],
+             result[1][1],
+             result[1][2],
+             result[1][3]))
+      elif (result[0][3] == result[1][3] == "DISABLED"):
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
              idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
              strSuppContacts,
              'DISABLE',
-             sps[0],
-             result[0],
-             sps[1],
-             result[1]))
-      elif (result[0] == None or result[1] == None):
+             result[0][0],
+             result[0][1],
+             result[0][2],
+             result[0][3],
+             result[1][0],
+             result[1][1],
+             result[1][2],
+             result[1][3]))
+      elif (result[0][3] == None or result[1][3] == None):
           # Do nothing
           return
       else:
-         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
+         eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
              idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
              idp['entityID'],
              idp['registrationAuthority'],
              strTechContacts,
              strSuppContacts,
              'ERROR',
-             sps[0],
-             result[0],
-             sps[1],
-             result[1]))
+             result[0][0],
+             result[0][1],
+             result[0][2],
+             result[0][3],
+             result[1][0],
+             result[1][1],
+             result[1][2],
+             result[1][3]))
+
 
 # MAIN
 if __name__=="__main__":
