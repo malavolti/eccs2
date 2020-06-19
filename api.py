@@ -253,7 +253,6 @@ class EccsResults(Resource):
                         'status' : idp_checks_status
                     } )
           elif (status):
-              app.logger.info("Results for status '%s'." % status)
               if (status == idp_checks_status):
                  result.append( 
                     { 
@@ -276,7 +275,6 @@ class EccsResults(Resource):
                         'status' : idp_checks_status
                     } )
           else:
-             app.logger.info("All checks.")
              result.append( 
              { 
                  'displayName' : idp_displayname,

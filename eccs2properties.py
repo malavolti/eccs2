@@ -25,6 +25,9 @@ ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSDIR
 ECCS2SELENIUMPAGELOADTIMEOUT = 30
 ECCS2SELENIUMSCRIPTTIMEOUT = 30
 
+# Selenium Debug Enable/Disable
+ECCS2SELENIUMDEBUG = True
+
 # Number of processes to run in parallel
 ECCS2NUMPROCESSES = 20
 

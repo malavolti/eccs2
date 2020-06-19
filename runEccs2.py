@@ -4,62 +4,12 @@ import asyncio
 import datetime
 import eccs2properties
 import json
-import pathlib
-import requests
-import sys
 import time
+from utils import getListFeds, getListEccsIdps, getRegAuthDict, getIdpList
 
 from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
 from subprocess import Popen,PIPE
 
-# Returns a Dict on "{ nameFed:reg_auth }"
-def getRegAuthDict(list_feds):
-   regAuth_dict = {}
-
-   for key,value in list_feds.items():
-      name = value['name']
-      reg_auth = value['reg_auth']
-
-      regAuth_dict[name] = reg_auth
-
-   return regAuth_dict
-
-
-# Returns a list of IdP for a single federation
-def getIdpList(list_eccs_idps,reg_auth):
-
-   fed_idp_list = []
-   for idp in list_eccs_idps:
-      if (idp['registrationAuthority'] == reg_auth):
-         fed_idp_list.append(idp)
-
-   return fed_idp_list
-
-
-# Returns a Python Dictionary
-def getListFeds(url, dest_file):
-   # If file does not exists... download it into the dest_file
-   path = pathlib.Path(dest_file)
-   if(path.exists() == False):
-      with open("%s" % (dest_file), mode="w+", encoding='utf-8') as f:
-         f.write(requests.get(url).text)
-
-   # then open it and work with local file
-   with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
-      return json.loads(f.read().replace("'", "&apos;"))
-
-
-# Returns a Python List
-def getListEccsIdps(url, dest_file):
-   # If file does not exists... download it into the dest_file
-   path = pathlib.Path(dest_file)
-   if(path.exists() == False):
-      with open("%s" % (dest_file), mode="w+", encoding='utf-8') as f:
-         f.write(requests.get(url).text)
-
-   # then open it and work with local file
-   with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
-      return json.loads(f.read().replace("'", "&apos;"))
 
 # Run Command
 async def run(name,queue,stdout_file,stderr_file):
