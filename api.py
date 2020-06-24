@@ -3,58 +3,17 @@
 import logging
 import re
 
-from eccs2properties import DAY,ECCS2LOGSDIR
+from eccs2properties import DAY,ECCS2LOGSDIR,ECCS2OUTPUTDIR
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from json import dumps, loads
 from logging.handlers import RotatingFileHandler
 from pathlib import PurePath
+from utils import getLogger, getDriver
 
 app = Flask(__name__)
 api = Api(app)
 
-def getLogger(filename,log_level="DEBUG",path="./"):
-
-    logger = logging.getLogger(filename)
-    ch = logging.FileHandler(path+filename,'w','utf-8')
-
-    if (log_level == "DEBUG"):
-       logger.setLevel(logging.DEBUG)
-       ch.setLevel(logging.DEBUG)
-    elif (log_level == "INFO"):
-       logger.setLevel(logging.INFO)
-       ch.setLevel(logging.INFO)
-    elif (log_level == "WARN"):
-       logger.setLevel(logging.WARN)
-       ch.setLevel(logging.WARN)
-    elif (log_level == "ERROR"):
-       logger.setLevel(logging.ERROR)
-       ch.setLevel(logging.ERROR)
-    elif (log_level == "CRITICAL"):
-       logger.setLevel(logging.CRITICAL)
-       ch.setLevel(logging.CRITICAL)
-
-    formatter = logging.Formatter('%(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    return logger
-
-
-# Setup Chromium Webdriver
-def setup():
-
-   chrome_options = webdriver.ChromeOptions()
-   chrome_options.add_argument('--headless')
-   chrome_options.add_argument('--no-sandbox')
-
-   driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
-
-   # Configure timeouts
-   driver.set_page_load_timeout(30)
-   driver.set_script_timeout(30)
-
-   return driver
 
 # /eccs2/test
 class Test(Resource):
@@ -67,7 +26,7 @@ class Checks(Resource):
     def get(self):
        app.logger.info("Request 'Checks'")
 
-       file_path = "%s/eccs2checks_%s.log" % (ECCS2LOGSDIR,DAY) 
+       file_path = "%s/eccs2checks_%s.log" % (ECCS2OUTPUTDIR,DAY) 
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None 
@@ -76,7 +35,7 @@ class Checks(Resource):
        if 'date' in request.args:
           app.logger.info("'date' parameter inserted")
           date = request.args['date']
-          file_path = "%s/eccs2checks_%s.log" % (ECCS2LOGSDIR,date)
+          file_path = "%s/eccs2checks_%s.log" % (ECCS2OUTPUTDIR,date)
        if 'pretty' in request.args:
           app.logger.info("'pretty' parameter inserted")
           pretty = request.args['pretty']
@@ -97,41 +56,49 @@ class Checks(Resource):
 
           check_idp = check[0]
           check_sp = check[1]
-          check_status = check[2].rstrip("\n\r")
+          status_code = check[2]
+          check_time = check[3]
+          check_status = check[4].rstrip("\n\r")
 
           if (idp and status):
-              app.logger.info("Checks for 'idp' and 'status'.")
+              app.logger.info("Search for 'idp':'%s' and 'status':'%s'." % (idp,status))
               if (idp == check_idp and status == check_status):
                  result.append( { 'sp' : check_sp,
                                   'idp' : check_idp,
+                                  'check_time': check_time,
+                                  'status_code': status_code,
                                   'status' : check_status,
                                   'date': date
                                 } )
           elif (idp):
-              #app.logger.info(re.search(".*."+idp+".*.", check_idp, re.IGNORECASE))
-              #app.logger.info(check_idp))
-              app.logger.info("Checks for Idp '%s'." % idp)
+              app.logger.info("Search for 'idp':'%s'" % idp)
               if (re.search(".*."+idp+".*.", check_idp, re.IGNORECASE)):
                  result.append( { 'sp' : check_sp,
                                   'idp' : check_idp,
+                                  'check_time': check_time,
+                                  'status_code': status_code,
                                   'status' : check_status,
                                   'date': date
                                 } )
           elif (status):
-              app.logger.info("Check for the status '%s'." % status)
+              app.logger.info("Search for 'status':'%s'." % status)
               if (status == check_status):
+                  result.append( { 'sp' : check_sp,
+                                   'idp' : check_idp,
+                                   'check_time': check_time,
+                                   'status_code': status_code,
+                                   'status' : check_status,
+                                   'date': date
+                                 } )
+          else:
+                 app.logger.info("All checks.")
                  result.append( { 'sp' : check_sp,
                                   'idp' : check_idp,
+                                  'check_time': check_time,
+                                  'status_code': status_code,
                                   'status' : check_status,
                                   'date': date
                                 } )
-          else:
-             app.logger.info("All checks.")
-             result.append( { 'sp' : check_sp,
-                              'idp' : check_idp,
-                              'status' : check_status,
-                              'date': date
-                            } )
 
        if (pretty):
           pp_json = dumps(result, indent=4, sort_keys=True)
@@ -154,7 +121,7 @@ class EccsResults(Resource):
     def get(self):
        app.logger.info("Request 'EccsResults'")
 
-       file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,DAY) 
+       file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,DAY)
        date = PurePath(file_path).parts[-1].split('_')[1].split('.')[0]
        pretty = 0
        status = None
@@ -163,7 +130,7 @@ class EccsResults(Resource):
        if 'date' in request.args:
           app.logger.info("'date' parameter inserted")
           date = request.args['date']
-          file_path = "%s/eccs2_%s.log" % (ECCS2LOGSDIR,date)
+          file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,date)
        if 'pretty' in request.args:
           app.logger.info("'pretty' parameter inserted")
           pretty = request.args['pretty']
@@ -197,23 +164,23 @@ class EccsResults(Resource):
           # SP-status-2                      check[13]
           check = line.split(";")
 
-          idp_displayname = check[0].rstrip("\n\r")
-          idp_entity_id = check[1].rstrip("\n\r")
-          idp_reg_auth = check[2].rstrip("\n\r")
-          idp_tech_ctcs = check[3].rstrip("\n\r")
-          idp_supp_ctcs = check[4].rstrip("\n\r")
-          idp_checks_status = check[5].rstrip("\n\r")
-          sp1_entity_id = check[6].rstrip("\n\r")
-          sp1_check_time = check[7].rstrip("\n\r")
-          sp1_status_code = check[8].rstrip("\n\r")
-          sp1_check_status = check[9].rstrip("\n\r")
-          sp2_entity_id = check[10].rstrip("\n\r")
-          sp2_check_time = check[11].rstrip("\n\r")
-          sp2_status_code = check[12].rstrip("\n\r")
+          idp_displayname = check[0]
+          idp_entity_id = check[1]
+          idp_reg_auth = check[2]
+          idp_tech_ctcs = check[3]
+          idp_supp_ctcs = check[4]
+          idp_checks_status = check[5]
+          sp1_entity_id = check[6]
+          sp1_check_time = check[7]
+          sp1_status_code = check[8]
+          sp1_check_status = check[9]
+          sp2_entity_id = check[10]
+          sp2_check_time = check[11]
+          sp2_status_code = check[12]
           sp2_check_status = check[13].rstrip("\n\r")
 
           if (idp and status):
-              app.logger.info("Results for the idp '%s' with status '%s'" % (idp, status))
+              app.logger.info("eccsresults: check for 'idp':'%s' with 'status':'%s'" % (idp, status))
               if (idp == idp_entity_id and status == idp_checks_status):
                  result.append( 
                     { 
@@ -228,21 +195,21 @@ class EccsResults(Resource):
                         'sp1' : {
                             'entityID' : sp1_entity_id,
                             'checkTime' : sp1_check_time,
-                            'status' : sp1_check_status,
-                            'statusCode' : sp1_status_code
+                            'statusCode' : sp1_status_code,
+                            'status' : sp1_check_status
                         },
                         'sp2' : {
                             'entityID' : sp2_entity_id,
                             'checkTime' : sp2_check_time,
-                            'status' : sp2_check_status,
-                            'statusCode' : sp2_status_code
+                            'statusCode' : sp2_status_code,
+                            'status' : sp2_check_status
                         },
                         'status' : idp_checks_status
                     } )
           elif (idp):
               #app.logger.info(re.search(".*."+idp+".*.", idp_entity_id, re.IGNORECASE))
               #app.logger.info(idp_entity_id))
-              app.logger.info("Results for IdP '%s'." % idp)
+              app.logger.info("eccsresults: results for IdP:'%s'." % idp)
               if (re.search(".*."+idp+".*.", idp_entity_id, re.IGNORECASE)):
                  result.append( 
                     { 
@@ -257,18 +224,19 @@ class EccsResults(Resource):
                         'sp1' : {
                             'entityID' : sp1_entity_id,
                             'checkTime' : sp1_check_time,
-                            'status' : sp1_check_status,
-                            'statusCode' : sp1_status_code
+                            'statusCode' : sp1_status_code,
+                            'status' : sp1_check_status
                         },
                         'sp2' : {
                             'entityID' : sp2_entity_id,
                             'checkTime' : sp2_check_time,
-                            'status' : sp2_check_status,
-                            'statusCode' : sp2_status_code
+                            'statusCode' : sp2_status_code,
+                            'status' : sp2_check_status
                         },
                         'status' : idp_checks_status
                     } )
           elif (status):
+              app.logger.info("eccsresults: Search for 'status':'%s'." % status)
               if (status == idp_checks_status):
                  result.append( 
                     { 
@@ -283,14 +251,14 @@ class EccsResults(Resource):
                         'sp1' : {
                            'entityID' : sp1_entity_id,
                            'checkTime' : sp1_check_time,
-                           'status' : sp1_check_status,
-                           'statusCode' : sp1_status_code
+                           'statusCode' : sp1_status_code,
+                           'status' : sp1_check_status
                         },
                         'sp2' : {
                            'entityID' : sp2_entity_id,
                            'checkTime' : sp2_check_time,
-                           'status' : sp2_check_status,
-                           'statusCode' : sp2_status_code
+                           'statusCode' : sp2_status_code,
+                           'status' : sp2_check_status
                         },
                         'status' : idp_checks_status
                     } )
@@ -308,14 +276,14 @@ class EccsResults(Resource):
                  'sp1' : {
                     'entityID' : sp1_entity_id,
                     'checkTime' : sp1_check_time,
-                    'status' : sp1_check_status,
-                    'statusCode' : sp1_status_code
+                    'statusCode' : sp1_status_code,
+                    'status' : sp1_check_status
                  },
                  'sp2' : {
                     'entityID' : sp2_entity_id,
                     'checkTime' : sp2_check_time,
-                    'status' : sp2_check_status,
-                    'statusCode' : sp2_status_code
+                    'statusCode' : sp2_status_code,
+                    'status' : sp2_check_status
                  },
                  'status' : idp_checks_status
              } )
@@ -339,5 +307,5 @@ api.add_resource(EccsResults, '/eccs/eccsresults') # Route_3
 if __name__ == '__main__':
    
    app.config['JSON_AS_ASCII'] = False
-   app.logger = getLogger("eccs2api.log", "INFO", ECCS2LOGSDIR)
+   app.logger = getLogger("eccs2api.log", ECCS2LOGSDIR, "w", "INFO")
    app.run(port='5002')

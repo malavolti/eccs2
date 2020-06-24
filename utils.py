@@ -7,6 +7,7 @@ import requests
 
 from eccs2properties import ECCS2SELENIUMLOGDIR, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 
 # Returns a Dict of "{ nameFed:reg_auth }"
@@ -63,6 +64,7 @@ def getListEccsIdps(url, dest_file):
 
 # Use logger to produce files consumed by ECCS-2 API
 def getLogger(filename, path, mode, log_level="DEBUG"):
+
     logger = logging.getLogger(filename)
     ch = logging.FileHandler("%s/%s" % (path,filename), mode,'utf-8')
 
@@ -119,10 +121,15 @@ def getDriver(fqdn_idp=None,debugSelenium=False):
 
     # For DEBUG only (By default ChromeDriver logs only warnings/errors to stderr.
     # When debugging issues, it is helpful to enable more verbose logging.)
-    if (debugSelenium and fqdn_idp):
-       driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, fqdn_idp)])
-    else:
-       driver = webdriver.Chrome('chromedriver', options=chrome_options)
+    try:
+       if (debugSelenium and fqdn_idp):
+          driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, fqdn_idp)])
+       else:
+          driver = webdriver.Chrome('chromedriver', options=chrome_options)
+    except WebDriverException as e:
+       print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
+       print (e.__str__())
+       return None
 
     # Configure timeouts
     driver.set_page_load_timeout("%d" % ECCS2SELENIUMPAGELOADTIMEOUT)

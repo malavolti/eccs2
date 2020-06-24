@@ -5,31 +5,34 @@ from datetime import date
 DAY = date.today().isoformat()
 
 ECCS2DIR = "/opt/eccs2"
-ECCS2LOGSDIR = "%s/logs" % ECCS2DIR
-ECCS2INPUTDIR = "%s/input" % ECCS2DIR
 
 # Input
+ECCS2INPUTDIR = "%s/input" % ECCS2DIR
 ECCS2LISTIDPSURL = 'https://technical.edugain.org/api.php?action=list_eccs_idps&format=json'
 ECCS2LISTIDPSFILE = "%s/list_eccs_idps.json" % ECCS2INPUTDIR
 ECCS2LISTFEDSURL = 'https://technical.edugain.org/api.php?action=list_feds&opt=1&format=json' 
 ECCS2LISTFEDSFILE = "%s/list_fed.json" % ECCS2INPUTDIR
 
 # Output
+ECCS2OUTPUTDIR = "%s/output" % ECCS2DIR
 ECCS2RESULTSLOG = "eccs2_%s.log" % DAY
 ECCS2CHECKSLOG = "eccs2checks_%s.log" % DAY
+ECCS2HTMLDIR = "%s/html" % ECCS2DIR
+ECCS2FAILEDCMD = "%s/failed-cmd.sh" % ECCS2LOGSDIR
+
+# Selenium
+ECCS2SELENIUMDEBUG = False
 ECCS2SELENIUMLOGDIR = "%s/selenium-logs" % ECCS2DIR
-ECCS2STDOUT = "%s/stdout.log" % ECCS2LOGSDIR
-ECCS2STDERR = "%s/stderr.log" % ECCS2LOGSDIR
+ECCS2SELENIUMPAGELOADTIMEOUT = 30 #seconds
+ECCS2SELENIUMSCRIPTTIMEOUT = 30   #seconds
 
-# Selenium Timeouts (in seconds)
-ECCS2SELENIUMPAGELOADTIMEOUT = 30
-ECCS2SELENIUMSCRIPTTIMEOUT = 30
-
-# Selenium Debug Enable/Disable
-ECCS2SELENIUMDEBUG = True
+# Logs
+ECCS2LOGSDIR = "%s/logs" % ECCS2DIR
+ECCS2STDOUT = "%s/stdout_%s.log" % (ECCS2LOGSDIR,DAY)
+ECCS2STDERR = "%s/stderr_%s.log" % (ECCS2LOGSDIR,DAY)
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 20
+ECCS2NUMPROCESSES = 30
 
 # The 2 SPs that will be used to test each IdP
 ECCS2SPS = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]

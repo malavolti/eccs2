@@ -1,6 +1,21 @@
-# HOWTO Install and Configure ECCS-2
+# EduGAIN Connectivity Check Service 2
 
-* `sudo apt install python3 python3-pip chromium chromium-l10n git libapache2-mod-wsgi python3-dev`
+# Requirements Hardware
+
+* OS: Debian 9,10 (tested)
+* HDD: 10 GB
+* RAM: 4 GB
+* CPU: >= 2 vCPU
+
+# Requirements Software
+
+* Apache Server + WSGI
+* Python 3.8
+* Selenim + Chromium Web Brower
+
+# HOWTO Install and Configure
+
+* `sudo apt install chromium chromium-l10n git jq`
 * `python3 -m pip install --user --upgrade pip virtualenv`
 * `python3 -m venv eccs2venv`
 * `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)

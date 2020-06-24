@@ -1,3 +1,9 @@
+// use URL constructor and return hostname
+function getHostname(url) {
+   const urlNew = new URL(url);
+   return urlNew.hostname;
+}
+
 /* Formatting function for row details - modify as you need */
 function format ( d ) {
     // `d` is the original data object for the row
@@ -16,6 +22,7 @@ function format ( d ) {
             '<td>Check Time</td>'+
             '<td>Status Code</td>'+
             '<td>Result Check</td>'+
+            '<td>Page Source</td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP1:</td>'+
@@ -23,6 +30,7 @@ function format ( d ) {
             '<td>'+d.sp1.checkTime+'</td>'+
             '<td>'+d.sp1.statusCode+'</td>'+
             '<td>'+d.sp1.status+'</td>'+
+            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp1.entityID)+'.html" target="_blank">Click to open</a></td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP2:</td>'+
@@ -30,9 +38,11 @@ function format ( d ) {
             '<td>'+d.sp2.checkTime+'</td>'+
             '<td>'+d.sp2.statusCode+'</td>'+
             '<td>'+d.sp2.status+'</td>'+
+            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp2.entityID)+'.html" target="_blank">Click to open</a></td>'+
         '</tr>'+
     '</table>';
 }
+
  
 $(document).ready(function() {
     var table = $('#eccstable').DataTable( {

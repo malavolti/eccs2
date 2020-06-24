@@ -7,12 +7,12 @@ import json
 import time
 from utils import getListFeds, getListEccsIdps, getRegAuthDict, getIdpList
 
-from eccs2properties import ECCS2STDOUT, ECCS2STDERR, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
+from eccs2properties import ECCS2FAILEDCMD, ECCS2STDOUT, ECCS2STDERR, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
 from subprocess import Popen,PIPE
 
 
 # Run Command
-async def run(name,queue,stdout_file,stderr_file):
+async def run(name,queue,stdout_file,stderr_file,cmd_file):
    while True:
       # Get a "cmd item" out of the queue.
       cmd = await queue.get()
@@ -27,15 +27,16 @@ async def run(name,queue,stdout_file,stderr_file):
       stdout, stderr = await proc.communicate()
 
       if stdout:
-         stdout_file.write(f'-----\n[cmd-out]\n{cmd}\n\n[stdout]\n{stdout.decode()}')
+         stdout_file.write('-----\n[cmd-out]\n%s\n\n[stdout]\n%s' % (cmd,stdout.decode()))
       if stderr:
-         stderr_file.write(f'-----\n[cmd-err]\n{cmd}\n\n[stderr]\n{stderr.decode()}')
+         stderr_file.write('-----\n[cmd-err]\n%s\n\n[stderr]\n%s' % (cmd,stderr.decode()))
+         cmd_file.write(cmd)
 
       # Notify the queue that the "work cmd" has been processed.
       queue.task_done()
 
 
-async def main(cmd_list,stdout_file,stderr_file):
+async def main(cmd_list,stdout_file,stderr_file,cmd_file):
     # Create a queue that we will use to store our "workload".
     queue = asyncio.Queue()
 
@@ -47,7 +48,7 @@ async def main(cmd_list,stdout_file,stderr_file):
     tasks = []
 
     for i in range(ECCS2NUMPROCESSES):
-        task = asyncio.create_task(run("cmd-{%d}" % i, queue, stdout_file, stderr_file))
+        task = asyncio.create_task(run("cmd-{%d}" % i, queue, stdout_file, stderr_file, cmd_file))
         tasks.append(task)
 
     # Wait until the queue is fully processed.
@@ -80,6 +81,7 @@ if __name__=="__main__":
 
    stdout_file = open(ECCS2STDOUT,"w+")
    stderr_file = open(ECCS2STDERR,"w+")
+   cmd_file = open(ECCS2FAILEDCMD,"w+")
 
    # Prepare input file for ECCS2
    regAuthDict = getRegAuthDict(list_feds)
@@ -97,7 +99,7 @@ if __name__=="__main__":
          proc_list.append(cmd)
          count = count + 1
  
-      asyncio.run(main(proc_list,stdout_file,stderr_file))
+      asyncio.run(main(proc_list,stdout_file,stderr_file,cmd_file))
 
    end = time.time()
    print("Time taken in hh:mm:ss - ", str(datetime.timedelta(seconds=end - start)))
