@@ -18,7 +18,6 @@ ECCS2OUTPUTDIR = "%s/output" % ECCS2DIR
 ECCS2RESULTSLOG = "eccs2_%s.log" % DAY
 ECCS2CHECKSLOG = "eccs2checks_%s.log" % DAY
 ECCS2HTMLDIR = "%s/html" % ECCS2DIR
-ECCS2FAILEDCMD = "%s/failed-cmd.sh" % ECCS2LOGSDIR
 
 # Selenium
 ECCS2SELENIUMDEBUG = False
@@ -30,9 +29,10 @@ ECCS2SELENIUMSCRIPTTIMEOUT = 30   #seconds
 ECCS2LOGSDIR = "%s/logs" % ECCS2DIR
 ECCS2STDOUT = "%s/stdout_%s.log" % (ECCS2LOGSDIR,DAY)
 ECCS2STDERR = "%s/stderr_%s.log" % (ECCS2LOGSDIR,DAY)
+ECCS2FAILEDCMD = "%s/failed-cmd.sh" % ECCS2LOGSDIR
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 30
+ECCS2NUMPROCESSES = 20
 
 # The 2 SPs that will be used to test each IdP
 ECCS2SPS = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]

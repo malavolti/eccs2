@@ -7,7 +7,7 @@ import re
 import requests
 import time
 
-from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2LOGSDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
+from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
 from pathlib import Path
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -45,12 +45,10 @@ def checkIdP(sp,idp):
 
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-      #logger.info("%s;%s;%s;NULL;Federation excluded from checks" % (idp['entityID'],sp,check_time))
       return (idp['entityID'],sp,check_time,"NULL","DISABLED")
 
    if (idp['entityID'] in entities_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-      #logger.info("%s;%s;%s;NULL;IdP excluded from checks" % (idp['entityID'],sp,check_time))
       return (idp['entityID'],sp,check_time,"NULL","DISABLED")
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
@@ -70,7 +68,6 @@ def checkIdP(sp,idp):
            html.write(page_source)
 
    except TimeoutException as e:
-     #logger.info("%s;%s;999;%s;Timeout" % (idp['entityID'],sp,check_time))
      return (idp['entityID'],sp,check_time,"999","Timeout")
 
    except NoSuchElementException as e:
@@ -82,7 +79,6 @@ def checkIdP(sp,idp):
      return None
 
    except UnexpectedAlertPresentException as e:
-     #logger.info("%s;%s;888;%s;UnexpectedAlertPresent" % (idp['entityID'],sp,check_time))
      return (idp['entityID'],sp,check_time,"888","ERROR")
 
    except WebDriverException as e:
@@ -99,7 +95,6 @@ def checkIdP(sp,idp):
 
    finally:
      driver.quit()
-
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
@@ -144,19 +139,43 @@ def checkIdP(sp,idp):
      print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "555"
 
-
    if(metadata_not_found):
-      #logger.info("%s;%s;%s;%s;No-eduGAIN-Metadata" % (idp['entityID'],sp,status_code,check_time))
       return (idp['entityID'],sp,check_time,status_code,"No-eduGAIN-Metadata")
    elif not username_found or not password_found:
-      #logger.info("%s;%s;%s;%s;Invalid-Form" % (idp['entityID'],sp,status_code,check_time))
       return (idp['entityID'],sp,check_time,status_code,"Invalid-Form")
    else:
-      #logger.info("%s;%s;%s;%s;OK" % (idp['entityID'],sp,status_code,check_time))
       return (idp['entityID'],sp,check_time,status_code,"OK")
 
 
-def check(idp,sps,eccs2log):
+def storeECCS2result(idp,results,idp_status):
+
+    # Build the contacts lists: technical/support
+    listTechContacts = getIdPContacts(idp,'technical')
+    listSuppContacts = getIdPContacts(idp,'support')
+
+    strTechContacts = ','.join(listTechContacts)
+    strSuppContacts = ','.join(listSuppContacts)
+
+    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
+    with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
+         f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+                idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0], # IdP-DisplayName
+                idp['entityID'],                                                       # IdP-entityID
+                idp['registrationAuthority'],                                          # IdP-RegAuth
+                strTechContacts,                                                       # IdP-TechCtcsList
+                strSuppContacts,                                                       # IdP-SuppCtcsList
+                idp_status,                                                            # IdP-ECCS-Status
+                results[0][1],                                                         # SP-entityID-1
+                results[0][2],                                                         # SP-check-time-1
+                results[0][3],                                                         # SP-status-code-1
+                results[0][4],                                                         # SP-result-1
+                results[1][1],                                                         # SP-entityID-2
+                results[1][2],                                                         # SP-check-time-2
+                results[1][3],                                                         # SP-status-code-2
+                results[1][4]))                                                        # SP-result-2
+
+
+def check(idp,sps):
       results = []
       for sp in sps:
          resultCheck = checkIdP(sp,idp)
@@ -171,68 +190,19 @@ def check(idp,sps,eccs2log):
                   f.write(";".join(elem))
                   f.write("\n")
 
-         listTechContacts = getIdPContacts(idp,'technical')
-         listSuppContacts = getIdPContacts(idp,'support')
-
-         strTechContacts = ','.join(listTechContacts)
-         strSuppContacts = ','.join(listSuppContacts)
-
          # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
          if (results[0][4] == results[1][4] == "OK"):
-            # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
-            eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-                idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
-                idp['entityID'],
-                idp['registrationAuthority'],
-                strTechContacts,
-                strSuppContacts,
-                'OK',
-                results[0][1],  # SP-entityID-1 
-                results[0][2],  # SP-check-time-1
-                results[0][3],  # SP-status-code-1
-                results[0][4],  # SP-result-1
-                results[1][1],  # SP-entityID-2
-                results[1][2],  # SP-check-time-2
-                results[1][3],  # SP-status-code-2
-                results[1][4])) # SP-result-2
+            storeECCS2result(idp,results,'OK')
+
          elif (results[0][4] == results[1][4] == "DISABLED"):
-            eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-                idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
-                idp['entityID'],
-                idp['registrationAuthority'],
-                strTechContacts,
-                strSuppContacts,
-                'DISABLE',
-                results[0][1],
-                results[0][2],
-                results[0][3],
-                results[0][4],
-                results[1][1],
-                results[1][2],
-                results[1][3],
-                results[1][4]))
+            storeECCS2result(idp,results,'DISABLED')
+
          else:
-            eccs2log.info("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s" % (
-                idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0],
-                idp['entityID'],
-                idp['registrationAuthority'],
-                strTechContacts,
-                strSuppContacts,
-                'ERROR',
-                results[0][1],
-                results[0][2],
-                results[0][3],
-                results[0][4],
-                results[1][1],
-                results[1][2],
-                results[1][3],
-                results[1][4]))
+            storeECCS2result(idp,results,'ERROR')
 
 
 # MAIN
 if __name__=="__main__":
-
-   eccs2log = getLogger(ECCS2RESULTSLOG, ECCS2OUTPUTDIR, 'a', "INFO")
 
    sps = ECCS2SPS
 
@@ -243,4 +213,4 @@ if __name__=="__main__":
 
    idp = json.loads(args.idpJson[0])
 
-   check(idp,sps,eccs2log)
+   check(idp,sps)

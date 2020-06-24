@@ -46,4 +46,25 @@
     * 'Excluded'
 * /eccs/eccsresults (Return the results of the last check ready for ECCS Gui)
 
+# APACHE CONFIGURATION
 
+* `sudo vim /etc/apache2/sites-availabled/eccs2.conf
+
+  ```apache
+  <IfModule mod_alias.c>
+     Alias /eccs2 /opt/eccs2/web
+     Alias /eccs2html /opt/eccs2/html
+
+     <Directory /opt/eccs2/web>
+        DirectoryIndex index.php
+        Require all granted
+     </Directory>
+
+     <Directory /opt/eccs2/html>
+        Require all granted
+     </Directory>
+  </IfModule>
+  ```
+
+* `sudo a2ensite eccs2.conf`
+* `sudo systemctl reload apache2.service`
