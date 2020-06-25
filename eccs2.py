@@ -159,20 +159,20 @@ def storeECCS2result(idp,results,idp_status):
     # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
     with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
          f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
-                idp['displayname'].replace("&apos;","'").split(';')[1].split('==')[0], # IdP-DisplayName
-                idp['entityID'],                                                       # IdP-entityID
-                idp['registrationAuthority'],                                          # IdP-RegAuth
-                strTechContacts,                                                       # IdP-TechCtcsList
-                strSuppContacts,                                                       # IdP-SuppCtcsList
-                idp_status,                                                            # IdP-ECCS-Status
-                results[0][1],                                                         # SP-entityID-1
-                results[0][2],                                                         # SP-check-time-1
-                results[0][3],                                                         # SP-status-code-1
-                results[0][4],                                                         # SP-result-1
-                results[1][1],                                                         # SP-entityID-2
-                results[1][2],                                                         # SP-check-time-2
-                results[1][3],                                                         # SP-status-code-2
-                results[1][4]))                                                        # SP-result-2
+                idp['displayname'].replace("&apos;","'").replace("&#039;","'").split(';')[1].split('==')[0], # IdP-DisplayName
+                idp['entityID'],                                                                             # IdP-entityID
+                idp['registrationAuthority'],                                                                # IdP-RegAuth
+                strTechContacts,                                                                             # IdP-TechCtcsList
+                strSuppContacts,                                                                             # IdP-SuppCtcsList
+                idp_status,                                                                                  # IdP-ECCS-Status
+                results[0][1],                                                                               # SP-entityID-1
+                results[0][2],                                                                               # SP-check-time-1
+                results[0][3],                                                                               # SP-status-code-1
+                results[0][4],                                                                               # SP-result-1
+                results[1][1],                                                                               # SP-entityID-2
+                results[1][2],                                                                               # SP-check-time-2
+                results[1][3],                                                                               # SP-status-code-2
+                results[1][4]))                                                                              # SP-result-2
 
 
 def check(idp,sps):
