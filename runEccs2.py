@@ -30,7 +30,7 @@ async def run(name,queue,stdout_file,stderr_file,cmd_file):
          stdout_file.write('-----\n[cmd-out]\n%s\n\n[stdout]\n%s' % (cmd,stdout.decode()))
       if stderr:
          stderr_file.write('-----\n[cmd-err]\n%s\n\n[stderr]\n%s' % (cmd,stderr.decode()))
-         cmd_file.write(cmd + '\n')
+         cmd_file.write('%s\n' % cmd)
 
       # Notify the queue that the "work cmd" has been processed.
       queue.task_done()
