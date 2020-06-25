@@ -20,20 +20,22 @@ from utils import getLogger, getIdPContacts, getDriver
 
 
 """
-  This script use Selenium and Chromium to select the IdP to check from a Shibboleth SP with the Shibboleth Embedded Discovery Service installed and configured to answer to all eduGAIN IdPs.
-  The SPs used to check an IdP will be SP24(IDEM) and Attribute Viewer (SWITCH). 
-  The check will be passed when both SPs will return the authentication page of the IdP checked.
+The script works with 2 SPs that using Shibboleth Embedded Discovery Service to allow IdP selection on their login page.
+The script has been written to simulate an user that inserts the IdP's entityID into the EDS search box and press "Enter" to load its Login Page. The Login Page MUST presents the fields "username" and "password" to pass the check on each SP involved into the test.
+If the IdP Login page presente the fields for both selected SP the test is passed, otherwise it is failed.
 """
 
+# The function check that the IdP recognized the SP by presenting its Login page.
+# If the IdP Login page contains "username" and "password" fields, than the test is passed.
 def checkIdP(sp,idp):
    # Chromedriver MUST be instanced here to avoid problems with SESSION
 
    # Disable SSL requests warning messages
    requests.packages.urllib3.disable_warnings()
 
-   debugSelenium = ECCS2SELENIUMDEBUG
+   debug_selenium = ECCS2SELENIUMDEBUG
    fqdn_idp = parse_url(idp['entityID'])[2]
-   driver = getDriver(fqdn_idp,debugSelenium)
+   driver = getDriver(fqdn_idp,debug_selenium)
 
    # Exception of WebDriver raises
    if (driver == None):
@@ -60,7 +62,7 @@ def checkIdP(sp,idp):
       page_source = driver.page_source
       samlrequest_url = driver.current_url
 
-      # Put the code of the page into an HTML file
+      # Put the page_source into its HTML file
       Path("%s/%s" % (ECCS2HTMLDIR,DAY)).mkdir(parents=True, exist_ok=True)
       fqdn_idp = parse_url(idp['entityID'])[2]
       fqdn_sp = parse_url(sp)[2]
@@ -68,7 +70,7 @@ def checkIdP(sp,idp):
            html.write(page_source)
 
    except TimeoutException as e:
-     return (idp['entityID'],sp,check_time,"999","Timeout")
+     return (idp['entityID'],sp,check_time,"(failed)","Timeout")
 
    except NoSuchElementException as e:
      # The input of the bootstrap tables are provided by "eccs2" and "eccs2checks" log.
@@ -78,14 +80,14 @@ def checkIdP(sp,idp):
      print("!!! NO SUCH ELEMENT EXCEPTION - RUN AGAIN THE COMMAND !!!")
      return None
 
-   except UnexpectedAlertPresentException as e:
-     return (idp['entityID'],sp,check_time,"888","ERROR")
+   #except UnexpectedAlertPresentException as e:
+   #  return (idp['entityID'],sp,check_time,"888","ERROR")
 
-   except WebDriverException as e:
-     print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
-     print (e.__str__())
-     print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     return None
+   #except WebDriverException as e:
+   #  print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
+   #  print (e.__str__())
+   #  print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
+   #  return None
 
    except Exception as e:
      print ("!!! EXCEPTION !!!")
@@ -113,7 +115,7 @@ def checkIdP(sp,idp):
      #print("!!! REQUESTS STATUS CODE CONNECTION ERROR EXCEPTION !!!")
      #print (e.__str__())
      #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-     status_code = "000"
+     status_code = "(failed)"
 
    except requests.exceptions.Timeout as e:
      #print("!!! REQUESTS STATUS CODE TIMEOUT EXCEPTION !!!")
@@ -147,58 +149,71 @@ def checkIdP(sp,idp):
       return (idp['entityID'],sp,check_time,status_code,"OK")
 
 
-def storeECCS2result(idp,results,idp_status):
+def getDisplayName(display_name):
+    display_name_equal_splitted = display_name.split('==')
+    for elem in display_name_equal_splitted:
+        if "en" in elem:
+           if "&apos;" in elem:
+               elem = elem.replace("&apos;","'")
+           if "&#039;" in elem:
+               elem = elem.replace("&#039;","'")
+           return elem.split(';')[1]
+
+
+# Append the result of the check on a file
+def storeECCS2result(idp,check_results,idp_status):
 
     # Build the contacts lists: technical/support
-    listTechContacts = getIdPContacts(idp,'technical')
-    listSuppContacts = getIdPContacts(idp,'support')
+    list_technical_contacts = getIdPContacts(idp,'technical')
+    list_support_contacts = getIdPContacts(idp,'support')
 
-    strTechContacts = ','.join(listTechContacts)
-    strSuppContacts = ','.join(listSuppContacts)
+    str_technical_contacts = ','.join(list_technical_contacts)
+    str_support_contacts = ','.join(list_support_contacts)
 
     # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
     with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
          f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
-                idp['displayname'].replace("&apos;","'").replace("&#039;","'").split(';')[1].split('==')[0], # IdP-DisplayName
-                idp['entityID'],                                                                             # IdP-entityID
-                idp['registrationAuthority'],                                                                # IdP-RegAuth
-                strTechContacts,                                                                             # IdP-TechCtcsList
-                strSuppContacts,                                                                             # IdP-SuppCtcsList
-                idp_status,                                                                                  # IdP-ECCS-Status
-                results[0][1],                                                                               # SP-entityID-1
-                results[0][2],                                                                               # SP-check-time-1
-                results[0][3],                                                                               # SP-status-code-1
-                results[0][4],                                                                               # SP-result-1
-                results[1][1],                                                                               # SP-entityID-2
-                results[1][2],                                                                               # SP-check-time-2
-                results[1][3],                                                                               # SP-status-code-2
-                results[1][4]))                                                                              # SP-result-2
+                getDisplayName(idp['displayname']),  # IdP-DisplayName
+                idp['entityID'],                     # IdP-entityID
+                idp['registrationAuthority'],        # IdP-RegAuth
+                str_technical_contacts,              # IdP-TechCtcsList
+                str_support_contacts,                # IdP-SuppCtcsList
+                idp_status,                          # IdP-ECCS-Status
+                check_results[0][1],                 # SP-entityID-1
+                check_results[0][2],                 # SP-check-time-1
+                check_results[0][3],                 # SP-status-code-1
+                check_results[0][4],                 # SP-result-1
+                check_results[1][1],                 # SP-entityID-2
+                check_results[1][2],                 # SP-check-time-2
+                check_results[1][3],                 # SP-status-code-2
+                check_results[1][4]))                # SP-result-2
 
 
+# Check an IdP with 2 SPs.
 def check(idp,sps):
-      results = []
-      for sp in sps:
-         resultCheck = checkIdP(sp,idp)
-         # Se il checkIdP ha successo, aggiungo alla lista dei check
-         # altrimenti no.
-         if resultCheck is not None:
-            results.append(resultCheck)
+    check_results = []
+    for sp in sps:
+        result = checkIdP(sp,idp)
+        # Se il checkIdP ha successo, aggiungo alla lista dei check
+        # altrimenti no.
+        if result is not None:
+           check_results.append(result)
 
-      if len(results) == 2:
-         with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2CHECKSLOG), 'a') as f:
-              for elem in results:
-                  f.write(";".join(elem))
-                  f.write("\n")
+    if len(check_results) == 2:
+       with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2CHECKSLOG), 'a') as f:
+            for elem in check_results:
+                f.write(";".join(elem))
+                f.write("\n")
 
-         # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
-         if (results[0][4] == results[1][4] == "OK"):
-            storeECCS2result(idp,results,'OK')
+       # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
+       if (check_results[0][4] == check_results[1][4] == "OK"):
+          storeECCS2result(idp,check_results,'OK')
 
-         elif (results[0][4] == results[1][4] == "DISABLED"):
-            storeECCS2result(idp,results,'DISABLED')
+       elif (check_results[0][4] == check_results[1][4] == "DISABLED"):
+            storeECCS2result(idp,check_results,'DISABLED')
 
-         else:
-            storeECCS2result(idp,results,'ERROR')
+       else:
+            storeECCS2result(idp,check_results,'ERROR')
 
 
 # MAIN
