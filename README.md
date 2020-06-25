@@ -15,6 +15,34 @@
 
 # HOWTO Install and Configure
 
+# Install Python 3.8.x
+
+1. Update the system packages:
+   * `sudo apt update ; sudo apt upgrade -y`
+
+2. Install needed packages to build python:
+   * `sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev`
+
+3. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/:
+   * `sudo wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
+
+4. Extract Python source package:
+   * `sudo cd /usr/local/src/`
+   * `sudo tar xzf Python-3.8.3.tar.gz`
+
+5. Build Python from the source package:
+   * `sudo cd /usr/local/src/Python-3.8.3`
+   * `sudo ./configure --enable-optimizations`
+   * `sudo make -j 4`
+
+6. Install Python 3.8.x (without replacing the system `python3` command) under `/usr/local/bin/python3.8`:
+   * `sudo make altinstall`
+   * `python3.8 --version`
+
+7. Create link of Python3.8 for scripts:
+   * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
+
+
 * `sudo apt install chromium chromium-l10n git jq`
 * `python3 -m pip install --user --upgrade pip virtualenv`
 * `python3 -m venv eccs2venv`
