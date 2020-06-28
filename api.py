@@ -153,12 +153,12 @@ class EccsResults(Resource):
           # IdP-RegAuth;                     check[2]
           # IdP-tech-ctc-1,IdP-tech-ctc-2;   check[3]
           # IdP-supp-ctc-1,IdP-supp-ctc-2;   check[4]
-          # Status;                          check[5]
-          # SP-entityID-1;                   check[6]
+          # ECCS Status;                     check[5]
+          # SP-wayfless-url-1;               check[6]
           # SP-check-time-1;                 check[7]
           # SP-status-code-1;                check[8]
           # SP-status-1;                     check[9]
-          # SP-entityID-2;                   check[10]
+          # SP-wayfless-url-2;               check[10]
           # SP-check-time-2;                 check[11]
           # SP-status-code-2                 check[12]
           # SP-status-2                      check[13]
@@ -169,19 +169,19 @@ class EccsResults(Resource):
           idp_reg_auth = check[2]
           idp_tech_ctcs = check[3]
           idp_supp_ctcs = check[4]
-          idp_checks_status = check[5]
-          sp1_entity_id = check[6]
+          idp_eccs_status = check[5]
+          sp1_wayfless_url = check[6]
           sp1_check_time = check[7]
           sp1_status_code = check[8]
           sp1_check_status = check[9]
-          sp2_entity_id = check[10]
+          sp2_wayfless_url = check[10]
           sp2_check_time = check[11]
           sp2_status_code = check[12]
           sp2_check_status = check[13].rstrip("\n\r")
 
           if (idp and status):
               app.logger.info("eccsresults: check for 'idp':'%s' with 'status':'%s'" % (idp, status))
-              if (idp == idp_entity_id and status == idp_checks_status):
+              if (idp == idp_entity_id and status == idp_eccs_status):
                  result.append( 
                     { 
                         'displayName' : idp_displayname,
@@ -193,18 +193,18 @@ class EccsResults(Resource):
                         },
                         'date' : date,
                         'sp1' : {
-                            'entityID' : sp1_entity_id,
+                            'wayfless_url' : sp1_wayfless_url,
                             'checkTime' : sp1_check_time,
                             'statusCode' : sp1_status_code,
                             'status' : sp1_check_status
                         },
                         'sp2' : {
-                            'entityID' : sp2_entity_id,
+                            'wayflessUrl' : sp2_wayfless_url,
                             'checkTime' : sp2_check_time,
                             'statusCode' : sp2_status_code,
                             'status' : sp2_check_status
                         },
-                        'status' : idp_checks_status
+                        'status' : idp_eccs_status
                     } )
           elif (idp):
               #app.logger.info(re.search(".*."+idp+".*.", idp_entity_id, re.IGNORECASE))
@@ -222,22 +222,22 @@ class EccsResults(Resource):
                         },
                         'date' : date,
                         'sp1' : {
-                            'entityID' : sp1_entity_id,
+                            'wayflessUrl' : sp1_wayfless_url,
                             'checkTime' : sp1_check_time,
                             'statusCode' : sp1_status_code,
                             'status' : sp1_check_status
                         },
                         'sp2' : {
-                            'entityID' : sp2_entity_id,
+                            'wayflessUrl' : sp2_wayfless_url,
                             'checkTime' : sp2_check_time,
                             'statusCode' : sp2_status_code,
                             'status' : sp2_check_status
                         },
-                        'status' : idp_checks_status
+                        'status' : idp_eccs_status
                     } )
           elif (status):
               app.logger.info("eccsresults: Search for 'status':'%s'." % status)
-              if (status == idp_checks_status):
+              if (status == idp_eccs_status):
                  result.append( 
                     { 
                         'displayName' : idp_displayname,
@@ -249,18 +249,18 @@ class EccsResults(Resource):
                         },
                         'date' : date,
                         'sp1' : {
-                           'entityID' : sp1_entity_id,
+                           'wayflessUrl' : sp1_wayfless_url,
                            'checkTime' : sp1_check_time,
                            'statusCode' : sp1_status_code,
                            'status' : sp1_check_status
                         },
                         'sp2' : {
-                           'entityID' : sp2_entity_id,
+                           'wayflessUrl' : sp2_wayfless_url,
                            'checkTime' : sp2_check_time,
                            'statusCode' : sp2_status_code,
                            'status' : sp2_check_status
                         },
-                        'status' : idp_checks_status
+                        'status' : idp_eccs_status
                     } )
           else:
              result.append( 
@@ -274,18 +274,18 @@ class EccsResults(Resource):
                  },
                  'date' : date,
                  'sp1' : {
-                    'entityID' : sp1_entity_id,
+                    'wayflessUrl' : sp1_wayfless_url,
                     'checkTime' : sp1_check_time,
                     'statusCode' : sp1_status_code,
                     'status' : sp1_check_status
                  },
                  'sp2' : {
-                    'entityID' : sp2_entity_id,
+                    'wayflessUrl' : sp2_wayfless_url,
                     'checkTime' : sp2_check_time,
                     'statusCode' : sp2_status_code,
                     'status' : sp2_check_status
                  },
-                 'status' : idp_checks_status
+                 'status' : idp_eccs_status
              } )
 
        if (pretty):

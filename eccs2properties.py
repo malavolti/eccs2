@@ -32,10 +32,10 @@ ECCS2STDERR = "%s/stderr_%s.log" % (ECCS2LOGSDIR,DAY)
 ECCS2FAILEDCMD = "%s/failed-cmd.sh" % ECCS2LOGSDIR
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 20
+ECCS2NUMPROCESSES = 25
 
 # The 2 SPs that will be used to test each IdP
-ECCS2SPS = ["https://sp24-test.garr.it/secure", "https://attribute-viewer.aai.switch.ch/eds/"]
+ECCS2SPS = ["https://sp24-test.garr.it/Shibboleth.sso/Login?entityID=", "https://attribute-viewer.aai.switch.ch/Shibboleth.sso/Login?entityID="]
 
 # Registration Authority of Federations to exclude from the check
 FEDS_BLACKLIST = [
@@ -46,21 +46,24 @@ FEDS_BLACKLIST = [
 
 # EntityID of IDPs to exclude from the check
 IDPS_BLACKLIST = [
-   'https://iif.iucc.ac.il/idp/saml2/idp/metadata.php',
+   'https://idp.eie.gr/idp/shibboleth',
+   'https://edugain-proxy.igtf.net/simplesaml/saml2/idp/metadata.php',
+   'https://gn-vho.grnet.gr/idp/shibboleth',
+   'https://wtc.tu-chemnitz.de/shibboleth',
+   'https://idp.utorauth.utoronto.ca/shibboleth',
    'https://login.lstonline.ac.uk/idp/pingfederate',
-   'https://idp.pearsoncollege.com/openathens',
    'https://idp.cambria.ac.uk/openathens',
-   'https://idp.wnsc.ac.uk/idp/shibboleth',
    'https://indiid.net/idp/shibboleth',
    'https://idp.nulc.ac.uk/openathens',
    'https://lc-idp.lincolncollege.ac.uk/shibboleth',
-   'https://oa-idp.wlv.ac.uk/oala/metadata',
-   'https://idp.uel.ac.uk/shibboleth',
+   'https://boleth.chi.ac.uk/idp/shibboleth',
+   'https://idp.wnsc.ac.uk/idp/shibboleth',
+   'https://idp.strodes.ac.uk/shibboleth',
    'https://idp.ucreative.ac.uk/shibboleth',
    'https://idp.llandrillo.ac.uk/shibboleth',
+   'https://idp.uel.ac.uk/shibboleth',
    'https://idp-dev.cardiff.ac.uk/idp/shibboleth',
-   'https://idp.kingston.ac.uk/shibboleth',   # iframe to load
-   'https://shibboleth.aber.ac.uk/shibboleth',
-   'https://sso.vu.lt/SSO/saml2/idp/metadata.php', # no standard login page
-   'urn:mace:federation.org.au:testfed:uq.edu.au'
+   'https://sso.vu.lt/SSO/saml2/idp/metadata.php',
+   #'https://ssl.education.lu/saml/saml2/idp/metadata.php',
+   'https://iif.iucc.ac.il/idp/saml2/idp/metadata.php'
 ]

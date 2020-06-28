@@ -1,7 +1,12 @@
 // use URL constructor and return hostname
 function getHostname(url) {
    const urlNew = new URL(url);
-   return urlNew.hostname;
+   if (urlNew.hostname){
+      return urlNew.hostname;
+   }
+   else {
+      return url.replace(/.+:/g, '');
+   }
 }
 
 /* Formatting function for row details - modify as you need */
@@ -20,25 +25,28 @@ function format ( d ) {
             '<td>Support Contacts:</td>'+
             '<td>'+d.contacts.support+'</td>'+
             '<td>Check Time</td>'+
-            '<td>Status Code</td>'+
             '<td>Result Check</td>'+
+            '<td>Status Code</td>'+
             '<td>Page Source</td>'+
+            '<td>Retry Check</td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP1:</td>'+
-            '<td>'+d.sp1.entityID+'</td>'+
+            '<td>https://'+getHostname(d.sp1.wayflessUrl)+'</td>'+
             '<td>'+d.sp1.checkTime+'</td>'+
-            '<td>'+d.sp1.statusCode+'</td>'+
             '<td>'+d.sp1.status+'</td>'+
-            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp1.entityID)+'.html" target="_blank">Click to open</a></td>'+
+            '<td>'+d.sp1.statusCode+'</td>'+
+            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp1.wayflessUrl)+'.html" target="_blank">Click to open</a></td>'+
+            '<td><a href="'+d.sp1.wayflessUrl+'" target="_blank">Click to retry</a></td>'+
         '</tr>'+
         '<tr>'+
             '<td>SP2:</td>'+
-            '<td>'+d.sp2.entityID+'</td>'+
+            '<td>https://'+getHostname(d.sp2.wayflessUrl)+'</td>'+
             '<td>'+d.sp2.checkTime+'</td>'+
-            '<td>'+d.sp2.statusCode+'</td>'+
             '<td>'+d.sp2.status+'</td>'+
-            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp2.entityID)+'.html" target="_blank">Click to open</a></td>'+
+            '<td>'+d.sp2.statusCode+'</td>'+
+            '<td><a href="/eccs2html/'+d.date+'/'+getHostname(d.entityID)+'---'+getHostname(d.sp2.wayflessUrl)+'.html" target="_blank">Click to open</a></td>'+
+            '<td><a href="'+d.sp2.wayflessUrl+'" target="_blank">Click to retry</a></td>'+
         '</tr>'+
     '</table>';
 }

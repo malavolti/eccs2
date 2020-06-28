@@ -25,6 +25,14 @@ The script has been written to simulate an user that inserts the IdP's entityID 
 If the IdP Login page presente the fields for both selected SP the test is passed, otherwise it is failed.
 """
 
+# Returns the FQDN to use on the HTML page_source files
+def getIDPfqdn(entityIDidp):
+    if entityIDidp.startswith('http'):
+       return parse_url(entityIDidp)[2]
+    else:
+       return entityIDidp.split(":")[-1] 
+
+
 # The function check that the IdP recognized the SP by presenting its Login page.
 # If the IdP Login page contains "username" and "password" fields, than the test is passed.
 def checkIdP(sp,idp):
@@ -45,32 +53,40 @@ def checkIdP(sp,idp):
    federation_blacklist = FEDS_BLACKLIST
    entities_blacklist = IDPS_BLACKLIST 
 
+   fqdn_idp = getIDPfqdn(idp['entityID'])
+   fqdn_sp = parse_url(sp)[2]
+   wayfless_url = sp + idp['entityID']
+
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-      return (idp['entityID'],sp,check_time,"NULL","DISABLED")
+
+      with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+           html.write("Federation excluded from check")
+      return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
    if (idp['entityID'] in entities_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-      return (idp['entityID'],sp,check_time,"NULL","DISABLED")
+
+      with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+           html.write("Identity Provider excluded from check")
+      return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
    try:
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-      driver.get(sp)
-      element = WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID,"idpSelectInput"))) 
-      element.send_keys(idp['entityID'] + Keys.ENTER)
+      driver.get(wayfless_url)
       page_source = driver.page_source
       samlrequest_url = driver.current_url
 
-      # Put the page_source into its HTML file
-      Path("%s/%s" % (ECCS2HTMLDIR,DAY)).mkdir(parents=True, exist_ok=True)
-      fqdn_idp = parse_url(idp['entityID'])[2]
-      fqdn_sp = parse_url(sp)[2]
+      # Put the page_source into an appropriate HTML file
       with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
            html.write(page_source)
 
    except TimeoutException as e:
-     return (idp['entityID'],sp,check_time,"(failed)","Timeout")
+     # Put an empty string into the page_source file
+     with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+          html.write("")
+     return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
 
    except NoSuchElementException as e:
      # The input of the bootstrap tables are provided by "eccs2" and "eccs2checks" log.
@@ -142,13 +158,14 @@ def checkIdP(sp,idp):
      status_code = "555"
 
    if(metadata_not_found):
-      return (idp['entityID'],sp,check_time,status_code,"No-eduGAIN-Metadata")
+      return (idp['entityID'],wayfless_url,check_time,status_code,"No-eduGAIN-Metadata")
    elif not username_found or not password_found:
-      return (idp['entityID'],sp,check_time,status_code,"Invalid-Form")
+      return (idp['entityID'],wayfless_url,check_time,status_code,"Invalid-Form")
    else:
-      return (idp['entityID'],sp,check_time,status_code,"OK")
+      return (idp['entityID'],wayfless_url,check_time,status_code,"OK")
 
 
+# Extract IdP DisplayName by fixing input string
 def getDisplayName(display_name):
     display_name_equal_splitted = display_name.split('==')
     for elem in display_name_equal_splitted:
@@ -170,7 +187,7 @@ def storeECCS2result(idp,check_results,idp_status):
     str_technical_contacts = ','.join(list_technical_contacts)
     str_support_contacts = ','.join(list_support_contacts)
 
-    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-entityID-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-entityID-2;SP-check-time-2;SP-status-code-2;SP-result-2
+    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
     with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
          f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
                 getDisplayName(idp['displayname']),  # IdP-DisplayName
@@ -179,11 +196,11 @@ def storeECCS2result(idp,check_results,idp_status):
                 str_technical_contacts,              # IdP-TechCtcsList
                 str_support_contacts,                # IdP-SuppCtcsList
                 idp_status,                          # IdP-ECCS-Status
-                check_results[0][1],                 # SP-entityID-1
+                check_results[0][1],                 # SP-wayfless-url-1
                 check_results[0][2],                 # SP-check-time-1
                 check_results[0][3],                 # SP-status-code-1
                 check_results[0][4],                 # SP-result-1
-                check_results[1][1],                 # SP-entityID-2
+                check_results[1][1],                 # SP-wayfless-url-2
                 check_results[1][2],                 # SP-check-time-2
                 check_results[1][3],                 # SP-status-code-2
                 check_results[1][4]))                # SP-result-2
@@ -194,8 +211,6 @@ def check(idp,sps):
     check_results = []
     for sp in sps:
         result = checkIdP(sp,idp)
-        # Se il checkIdP ha successo, aggiungo alla lista dei check
-        # altrimenti no.
         if result is not None:
            check_results.append(result)
 
@@ -227,5 +242,7 @@ if __name__=="__main__":
    args = parser.parse_args()
 
    idp = json.loads(args.idpJson[0])
+
+   Path("%s/%s" % (ECCS2HTMLDIR,DAY)).mkdir(parents=True, exist_ok=True)   # Create dir needed to page_source content
 
    check(idp,sps)
