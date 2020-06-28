@@ -30,6 +30,9 @@ ECCS2LOGSDIR = "%s/logs" % ECCS2DIR
 ECCS2STDOUT = "%s/stdout_%s.log" % (ECCS2LOGSDIR,DAY)
 ECCS2STDERR = "%s/stderr_%s.log" % (ECCS2LOGSDIR,DAY)
 ECCS2FAILEDCMD = "%s/failed-cmd.sh" % ECCS2LOGSDIR
+ECCS2STDOUTIDP = "%s/stdout_idp_%s.log" % (ECCS2LOGSDIR,DAY)
+ECCS2STDERRIDP = "%s/stderr_idp_%s.log" % (ECCS2LOGSDIR,DAY)
+ECCS2FAILEDCMDIDP = "%s/failed-cmd-idp.sh" % ECCS2LOGSDIR
 
 # Number of processes to run in parallel
 ECCS2NUMPROCESSES = 25

@@ -35,7 +35,7 @@ def getIDPfqdn(entityIDidp):
 
 # The function check that the IdP recognized the SP by presenting its Login page.
 # If the IdP Login page contains "username" and "password" fields, than the test is passed.
-def checkIdP(sp,idp):
+def checkIdP(sp,idp,test):
    # Chromedriver MUST be instanced here to avoid problems with SESSION
 
    # Disable SSL requests warning messages
@@ -60,15 +60,23 @@ def checkIdP(sp,idp):
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
-      with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-           html.write("Federation excluded from check")
+      if (test is not True):
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+              html.write("Federation excluded from check")
+      else:
+         print("Federation excluded from check")
+
       return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
    if (idp['entityID'] in entities_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
-      with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-           html.write("Identity Provider excluded from check")
+      if (test is not True):
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+              html.write("Identity Provider excluded from check")
+      else:
+         print("Identity Provider excluded from check")
+
       return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
    # Open SP, select the IDP from the EDS and press 'Enter' to reach the IdP login page to check
@@ -78,14 +86,20 @@ def checkIdP(sp,idp):
       page_source = driver.page_source
       samlrequest_url = driver.current_url
 
-      # Put the page_source into an appropriate HTML file
-      with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-           html.write(page_source)
+      if (test is not True):
+         # Put the page_source into an appropriate HTML file
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+              html.write(page_source)
+      else:
+         print("[page_source of %s]\n%s" % (fqdn_idp,page_source))
 
    except TimeoutException as e:
-     # Put an empty string into the page_source file
-     with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-          html.write("")
+     if (test is not True):
+        # Put an empty string into the page_source file
+        with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+             html.write("")
+     else:
+        print("[page_source of %s]\nNo source code" % (fqdn_idp))
      return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
 
    except NoSuchElementException as e:
@@ -169,7 +183,7 @@ def getDisplayName(display_name):
 
 
 # Append the result of the check on a file
-def storeECCS2result(idp,check_results,idp_status):
+def storeECCS2result(idp,check_results,idp_status,test):
 
     # Build the contacts lists: technical/support
     list_technical_contacts = getIdPContacts(idp,'technical')
@@ -178,48 +192,71 @@ def storeECCS2result(idp,check_results,idp_status):
     str_technical_contacts = ','.join(list_technical_contacts)
     str_support_contacts = ','.join(list_support_contacts)
 
-    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;IdP-ECCS-Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
-    with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
-         f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
-                getDisplayName(idp['displayname']),  # IdP-DisplayName
-                idp['entityID'],                     # IdP-entityID
-                idp['registrationAuthority'],        # IdP-RegAuth
-                str_technical_contacts,              # IdP-TechCtcsList
-                str_support_contacts,                # IdP-SuppCtcsList
-                idp_status,                          # IdP-ECCS-Status
-                check_results[0][1],                 # SP-wayfless-url-1
-                check_results[0][2],                 # SP-check-time-1
-                check_results[0][3],                 # SP-status-code-1
-                check_results[0][4],                 # SP-result-1
-                check_results[1][1],                 # SP-wayfless-url-2
-                check_results[1][2],                 # SP-check-time-2
-                check_results[1][3],                 # SP-status-code-2
-                check_results[1][4]))                # SP-result-2
+    if (test is not True):
+       # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;IdP-ECCS-Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
+       with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
+            f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+                   getDisplayName(idp['displayname']),  # IdP-DisplayName
+                   idp['entityID'],                     # IdP-entityID
+                   idp['registrationAuthority'],        # IdP-RegAuth
+                   str_technical_contacts,              # IdP-TechCtcsList
+                   str_support_contacts,                # IdP-SuppCtcsList
+                   idp_status,                          # IdP-ECCS-Status
+                   check_results[0][1],                 # SP-wayfless-url-1
+                   check_results[0][2],                 # SP-check-time-1
+                   check_results[0][3],                 # SP-status-code-1
+                   check_results[0][4],                 # SP-result-1
+                   check_results[1][1],                 # SP-wayfless-url-2
+                   check_results[1][2],                 # SP-check-time-2
+                   check_results[1][3],                 # SP-status-code-2
+                   check_results[1][4]))                # SP-result-2
+    else:
+       print("\nECCS2:")
+       print("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+                   getDisplayName(idp['displayname']),  # IdP-DisplayName
+                   idp['entityID'],                     # IdP-entityID
+                   idp['registrationAuthority'],        # IdP-RegAuth
+                   str_technical_contacts,              # IdP-TechCtcsList
+                   str_support_contacts,                # IdP-SuppCtcsList
+                   idp_status,                          # IdP-ECCS-Status
+                   check_results[0][1],                 # SP-wayfless-url-1
+                   check_results[0][2],                 # SP-check-time-1
+                   check_results[0][3],                 # SP-status-code-1
+                   check_results[0][4],                 # SP-result-1
+                   check_results[1][1],                 # SP-wayfless-url-2
+                   check_results[1][2],                 # SP-check-time-2
+                   check_results[1][3],                 # SP-status-code-2
+                   check_results[1][4]))                # SP-result-2
 
 
 # Check an IdP with 2 SPs.
-def check(idp,sps):
+def check(idp,sps,test):
     check_results = []
     for sp in sps:
-        result = checkIdP(sp,idp)
+        result = checkIdP(sp,idp,test)
         if result is not None:
            check_results.append(result)
 
     if len(check_results) == 2:
-       with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2CHECKSLOG), 'a') as f:
-            for elem in check_results:
-                f.write(";".join(elem))
-                f.write("\n")
+       if (test is not True):
+          with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2CHECKSLOG), 'a') as f:
+               for elem in check_results:
+                   f.write(";".join(elem))
+                   f.write("\n")
+       else:
+           print("\nECCS2CHECKS:")
+           for elem in check_results:
+               print(";".join(elem))
 
        # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
        if (check_results[0][4] == check_results[1][4] == "OK"):
-          storeECCS2result(idp,check_results,'OK')
+          storeECCS2result(idp,check_results,'OK',test)
 
        elif (check_results[0][4] == check_results[1][4] == "DISABLED"):
-            storeECCS2result(idp,check_results,'DISABLED')
+            storeECCS2result(idp,check_results,'DISABLED',test)
 
        else:
-            storeECCS2result(idp,check_results,'ERROR')
+            storeECCS2result(idp,check_results,'ERROR',test)
 
 
 # MAIN
@@ -229,6 +266,7 @@ if __name__=="__main__":
 
    parser = argparse.ArgumentParser(description='Checks if the input IdP consumed correctly eduGAIN metadata by accessing two different SPs')
    parser.add_argument("idpJson", metavar="idpJson", nargs=1, help="An IdP in Json format")
+   parser.add_argument("--test", action='store_true', help="Test the IdP without effects")
 
    args = parser.parse_args()
 
@@ -236,4 +274,4 @@ if __name__=="__main__":
 
    Path("%s/%s" % (ECCS2HTMLDIR,DAY)).mkdir(parents=True, exist_ok=True)   # Create dir needed to page_source content
 
-   check(idp,sps)
+   check(idp,sps,args.test)

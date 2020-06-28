@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import requests
+import sys
 
 from eccs2properties import ECCS2SELENIUMLOGDIR, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
 from selenium import webdriver
@@ -24,10 +25,13 @@ def getRegAuthDict(list_feds):
 
 
 # Returns a list of IdP for a single federation
-def getIdpList(list_eccs_idps,reg_auth=None):
+def getIdpList(list_eccs_idps,reg_auth=None,idp_entityid=None):
     fed_idp_list = []
     for idp in list_eccs_idps:
-       if (reg_auth):
+       if (idp_entityid):
+          if (idp['entityID'] == idp_entityid):
+             fed_idp_list.append(idp)
+       elif (reg_auth):
           if (idp['registrationAuthority'] == reg_auth):
              fed_idp_list.append(idp)
        else:
@@ -127,8 +131,8 @@ def getDriver(fqdn_idp=None,debugSelenium=False):
        else:
           driver = webdriver.Chrome('chromedriver', options=chrome_options)
     except WebDriverException as e:
-       print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
-       print (e.__str__())
+       sys.stderr.write("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
+       sys.stderr.write(e.__str__())
        return None
 
     # Configure timeouts
