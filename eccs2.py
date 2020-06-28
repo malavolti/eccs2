@@ -96,15 +96,6 @@ def checkIdP(sp,idp):
      print("!!! NO SUCH ELEMENT EXCEPTION - RUN AGAIN THE COMMAND !!!")
      return None
 
-   #except UnexpectedAlertPresentException as e:
-   #  return (idp['entityID'],sp,check_time,"888","ERROR")
-
-   #except WebDriverException as e:
-   #  print("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
-   #  print (e.__str__())
-   #  print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
-   #  return None
-
    except Exception as e:
      print ("!!! EXCEPTION !!!")
      print (e.__str__())
@@ -187,7 +178,7 @@ def storeECCS2result(idp,check_results,idp_status):
     str_technical_contacts = ','.join(list_technical_contacts)
     str_support_contacts = ','.join(list_support_contacts)
 
-    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
+    # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;IdP-ECCS-Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
     with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
          f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
                 getDisplayName(idp['displayname']),  # IdP-DisplayName
