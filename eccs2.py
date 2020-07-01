@@ -6,7 +6,7 @@ import json
 import re
 import requests
 
-from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
+from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
 from pathlib import Path
 from selenium.common.exceptions import TimeoutException
 from urllib3.util import parse_url
@@ -181,7 +181,7 @@ def storeECCS2result(idp,check_results,idp_status,test):
     if (test is not True):
        # IdP-DisplayName;IdP-entityID;IdP-RegAuth;IdP-tech-ctc-1,IdP-tech-ctc-2;IdP-supp-ctc-1,IdP-supp-ctc-2;IdP-ECCS-Status;SP-wayfless-url-1;SP-check-time-1;SP-status-code-1;SP-result-1;SP-wayfless-url-2;SP-check-time-2;SP-status-code-2;SP-result-2
        with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2RESULTSLOG), 'a') as f:
-            f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+           f.write('{"displayName":"%s","entityID":"%s","registrationAuthority":"%s","contacts":{"technical":"%s","support":"%s"},"status":"%s","sp1":{"wayflessUrl":"%s","checkTime":"%s","statusCode":"%s","status":"%s"},"sp2":{"wayflessUrl":"%s","checkTime":"%s","statusCode":"%s","status":"%s"}}\n' % (
                    getDisplayName(idp['displayname']),  # IdP-DisplayName
                    idp['entityID'],                     # IdP-entityID
                    idp['registrationAuthority'],        # IdP-RegAuth
@@ -198,7 +198,7 @@ def storeECCS2result(idp,check_results,idp_status,test):
                    check_results[1][4]))                # SP-result-2
     else:
        print("\nECCS2:")
-       print("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+       print('{"displayName":"%s","entityID":"%s","registrationAuthority":"%s","contacts":{"technical":"%s","support":"%s"},"status":"%s","sp1":{"wayflessUrl":"%s","checkTime":"%s","statusCode":"%s","status":"%s"},"sp2":{"wayflessUrl":"%s","checkTime":"%s","statusCode":"%s","status":"%s"}}\n' % (
                    getDisplayName(idp['displayname']),  # IdP-DisplayName
                    idp['entityID'],                     # IdP-entityID
                    idp['registrationAuthority'],        # IdP-RegAuth
@@ -224,21 +224,14 @@ def check(idp,sps,test):
            check_results.append(result)
 
     if len(check_results) == 2:
-       if (test is not True):
-          with open("%s/%s" % (ECCS2OUTPUTDIR,ECCS2CHECKSLOG), 'a') as f:
-               for elem in check_results:
-                   f.write(";".join(elem))
-                   f.write("\n")
-       else:
-           print("\nECCS2CHECKS:")
-           for elem in check_results:
-               print(";".join(elem))
+       check_result_sp1 = check_results[0][4]
+       check_result_sp2 = check_results[1][4]
 
        # If all checks are 'OK', than the IdP consuming correctly eduGAIN Metadata.
-       if (check_results[0][4] == check_results[1][4] == "OK"):
+       if (check_result_sp1 == check_result_sp2 == "OK"):
           storeECCS2result(idp,check_results,'OK',test)
 
-       elif (check_results[0][4] == check_results[1][4] == "DISABLED"):
+       elif (check_result_sp1 == check_result_sp2 == "DISABLED"):
             storeECCS2result(idp,check_results,'DISABLED',test)
 
        else:

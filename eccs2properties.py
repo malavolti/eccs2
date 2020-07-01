@@ -16,7 +16,6 @@ ECCS2LISTFEDSFILE = "%s/list_fed.json" % ECCS2INPUTDIR
 # Output
 ECCS2OUTPUTDIR = "%s/output" % ECCS2DIR
 ECCS2RESULTSLOG = "eccs2_%s.log" % DAY
-ECCS2CHECKSLOG = "eccs2checks_%s.log" % DAY
 ECCS2HTMLDIR = "%s/html" % ECCS2DIR
 
 # Selenium
