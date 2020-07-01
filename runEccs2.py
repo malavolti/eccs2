@@ -9,7 +9,7 @@ import time
 from utils import getListFeds, getListEccsIdps, getRegAuthDict, getIdpList
 
 from eccs2properties import ECCS2FAILEDCMD, ECCS2FAILEDCMDIDP, ECCS2STDOUT, ECCS2STDERR, ECCS2STDOUTIDP, ECCS2STDERRIDP, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE 
-from subprocess import Popen,PIPE
+from subprocess import PIPE
 
 
 # Run Command
@@ -87,18 +87,16 @@ if __name__=="__main__":
    dest_file = ECCS2LISTIDPSFILE
    list_eccs_idps = getListEccsIdps(url, dest_file)
 
-   if (args.idp_entityid[0]):
+   if (args.idp_entityid):
       stdout_file = open(ECCS2STDOUTIDP,"w+")
       stderr_file = open(ECCS2STDERRIDP,"w+")
       cmd_file = open(ECCS2FAILEDCMDIDP,"w+")
       idpJsonList = getIdpList(list_eccs_idps,idp_entityid=args.idp_entityid[0])
 
-      if (args.test):
-         cmd = "%s/eccs2.py \'%s\' --test" % (ECCS2DIR,json.dumps(idpJsonList[0]))
-         print(cmd)
-      else:
+      if (args.test is not True):
          cmd = "%s/eccs2.py \'%s\'" % (ECCS2DIR,json.dumps(idpJsonList[0]))
-         print(cmd)
+      else:
+         cmd = "%s/eccs2.py \'%s\' --test" % (ECCS2DIR,json.dumps(idpJsonList[0]))
 
       proc_list = [cmd]
       asyncio.run(main(proc_list,stdout_file,stderr_file,cmd_file))
@@ -115,7 +113,7 @@ if __name__=="__main__":
           idpJsonList = getIdpList(list_eccs_idps,regAuth)
 
           num_idps = len(idpJsonList)
-          if (arg.test is not True):
+          if (args.test is not True):
              cmd_list = [["%s/eccs2.py \'%s\'" % (ECCS2DIR, json.dumps(idp))] for idp in idpJsonList]
           else:
              cmd_list = [["%s/eccs2.py \'%s\' --test" % (ECCS2DIR, json.dumps(idp))] for idp in idpJsonList]

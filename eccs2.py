@@ -5,16 +5,10 @@ import datetime
 import json
 import re
 import requests
-import time
 
 from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, ECCS2CHECKSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
 from pathlib import Path
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select, WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, UnexpectedAlertPresentException
-from urllib3.exceptions import MaxRetryError
+from selenium.common.exceptions import TimeoutException
 from urllib3.util import parse_url
 from utils import getLogger, getIdPContacts, getDriver
 
@@ -101,14 +95,6 @@ def checkIdP(sp,idp,test):
      else:
         print("[page_source of %s]\nNo source code" % (fqdn_idp))
      return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
-
-   except NoSuchElementException as e:
-     # The input of the bootstrap tables are provided by "eccs2" and "eccs2checks" log.
-     # If I don't return anything and I don't put anything in the logger
-     # I'll not write on the input files for the table
-     # and I can re-run the command that caused the exception from the "stdout.log" file.
-     print("!!! NO SUCH ELEMENT EXCEPTION - RUN AGAIN THE COMMAND !!!")
-     return None
 
    except Exception as e:
      print ("!!! EXCEPTION !!!")
