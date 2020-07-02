@@ -59,10 +59,10 @@ class EccsResults(Resource):
        lines = fo.readlines()
 
        for line in lines:
-          # Remove Carriage Return chars
-          line.rstrip("\n\r")
+          # Strip the line feed and carriage return characters
+          line = line.rstrip("\n\r")
 
-          # Loads json into aux
+          # Loads the json line into aux
           aux = json.loads(line)
 
           aux['date'] = date
