@@ -1,3 +1,7 @@
+// Global URL
+var url = "/eccs2/api/eccsresults?eccdt=1";
+var table;
+
 // use URL constructor and return hostname
 function getHostname(url) {
    const urlNew = new URL(url);
@@ -51,11 +55,15 @@ function format ( d ) {
     '</table>';
 }
 
+function getPastResults() {
+   url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
+   table.ajax.url( url ).load();
+}
  
 $(document).ready(function() {
-    var table = $('#eccstable').DataTable( {
+    table = $('#eccstable').DataTable( {
         "ajax": { 
-           "url": "data.json",
+           "url": url,
            "dataSrc": ""
         },
         "lengthMenu": [[10, 20, 30, 40, 50, 100, -1], [10, 20, 30, 40, 50, 100, "All"]],

@@ -15,9 +15,11 @@
   <body>
     <hr>
     <div id="status">
-      <input type="checkbox" name="status" value="ERROR">ERROR
-      <input type="checkbox" name="status" value="OK">OK
-      <input type="checkbox" name="status" value="DISABLE">DISABLE
+      <input type="checkbox" name="status" value="ERROR">ERROR</input>
+      <input type="checkbox" name="status" value="OK">OK</input>
+      <input type="checkbox" name="status" value="DISABLE">DISABLE</input>
+      <button style="float:right;" onclick="getPastResults()">Go</button>
+      <input style="float:right;" type="date" id="myDate" min="2020-07-03" max="<?php echo date("Y-m-d")?>" value="<?php echo date("Y-m-d")?>"/>
     </div>
     <hr>
     <button id="btn-show-all-children" type="button">Expand All</button>
