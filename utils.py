@@ -50,7 +50,7 @@ def getListFeds(url, dest_file):
 
     # then open it and work with local file
     with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
-         return json.loads(f.read().replace("'", "&apos;"))
+         return json.loads(f.read().replace("'","&#039;"))
 
 
 # Download all eduGAIN IdPs from URL, store them on a local file and returns a Python List
@@ -63,7 +63,7 @@ def getListEccsIdps(url, dest_file):
 
     # then open it and work with local file
     with open("%s" % (dest_file), mode="r", encoding='utf-8') as f:
-         return json.loads(f.read().replace("'", "&apos;"))
+         return json.loads(f.read().replace("'","&#039;"))
 
 
 # Use logger to produce files consumed by ECCS-2 API

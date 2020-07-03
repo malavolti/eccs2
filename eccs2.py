@@ -97,7 +97,7 @@ def checkIdP(sp,idp,test):
      return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
 
    except Exception as e:
-     print ("!!! EXCEPTION !!!")
+     print ("!!! EXCEPTION DRIVER !!!")
      print (e.__str__())
      print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      return None
@@ -143,7 +143,7 @@ def checkIdP(sp,idp,test):
      status_code = "333"
 
    except Exception as e:
-     print ("!!! EXCEPTION !!!")
+     print ("!!! EXCEPTION REQUESTS !!!")
      print (e.__str__())
      print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "555"
@@ -161,10 +161,10 @@ def getDisplayName(display_name):
     display_name_equal_splitted = display_name.split('==')
     for elem in display_name_equal_splitted:
         if "en" in elem:
-           if "&apos;" in elem:
-               elem = elem.replace("&apos;","'")
            if "&#039;" in elem:
-               elem = elem.replace("&#039;","'")
+              elem = elem.replace("&#039;","'")
+           if '"' in elem:
+              elem = elem.replace('"','\\"')
            return elem.split(';')[1]
 
 

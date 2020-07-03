@@ -61,6 +61,7 @@ class EccsResults(Resource):
        for line in lines:
           # Strip the line feed and carriage return characters
           line = line.rstrip("\n\r")
+          print(line)
 
           # Loads the json line into aux
           aux = json.loads(line)
