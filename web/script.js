@@ -1,9 +1,12 @@
 // Global URL
-var url = "/eccs2/api/eccsresults?eccdt=1";
+var url = "/eccs2/api/eccsresults?eccsdt=1";
 var table;
 
 // use URL constructor and return hostname
 function getHostname(url) {
+   if (url == ""){
+      return null
+   }
    const urlNew = new URL(url);
    if (urlNew.hostname){
       return urlNew.hostname;
@@ -53,6 +56,7 @@ function format ( d ) {
             '<td><a href="'+d.sp2.wayflessUrl+'" target="_blank">Click to retry</a></td>'+
         '</tr>'+
     '</table>';
+    }
 }
 
 function getPastResults() {
