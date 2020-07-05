@@ -4,8 +4,8 @@ import json
 import logging
 import re
 
-from eccs2properties import DAY,ECCS2LOGSDIR,ECCS2OUTPUTDIR
-from flask.logging import default_handler
+from eccs2properties import DAY, ECCS2LOGSDIR, ECCS2OUTPUTDIR
+#from flask.logging import default_handler
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from utils import getLogger
@@ -27,18 +27,25 @@ def buildEmailAddress(listContacts):
     return hrefList
 
 
-def existsInFile(file_path, value, research_item):
-    with open(file_path,"r",encoding="utf-8") as fo:
-         lines = fo.readlines()
-         for line in lines:
-             aux = json.loads(line)
-             if (research_item == "entityID"):
-                if (value == aux['entityID']):
-                   return True
-             if (research_item == "registrationAuthority"):
-                if (value == aux['registrationAuthority']):
-                   return True
-         return False
+def existsInFile(file_path, value, research_item, eccsDataTable):
+    try:
+       with open(file_path,"r",encoding="utf-8") as fo:
+            lines = fo.readlines()
+    except FileNotFoundError as e:
+        if (eccsDataTable):
+           return ''
+        else:
+           return jsonify(error='FileNotFound: ECCS2 script has not been executed for this day')
+
+    for line in lines:
+        aux = json.loads(line)
+        if (research_item == "entityID"):
+           if (value == aux['entityID']):
+              return True
+        if (research_item == "registrationAuthority"):
+           if (value == aux['registrationAuthority']):
+              return True
+    return False
 
 
 ### Classes
@@ -69,15 +76,15 @@ class EccsResults(Resource):
        if 'status' in request.args:
           status = request.args['status'].upper()
           if (status not in ['OK','DISABLED','ERROR']):
-              return '{ "error": "Incorrect status provided. It can be \'ok\',\'disabled\',\'error\'" }'
+              return jsonify(error="Incorrect status provided. It can be 'ok','disabled','error'")
        if 'idp' in request.args:
           idp = request.args['idp']
-          if (not existsInFile(file_path, idp, "entityID")):
-              return "Identity Provider not found with the entityID: %s" % idp
+          if (not existsInFile(file_path, idp, "entityID", eccsDataTable)):
+             return jsonify(error="Identity Provider not found with the entityID: %s" % idp)
        if 'reg_auth' in request.args:
           reg_auth = request.args['reg_auth']
-          if (not existsInFile(file_path, reg_auth, "registrationAuthority")):
-              return "Identity Providers not found with the Registration Authority: %s" % reg_auth
+          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable)):
+             return jsonify(error="Identity Providers not found with the Registration Authority: %s" % reg_auth)
 
        lines = []
        results = []
@@ -89,7 +96,7 @@ class EccsResults(Resource):
            if (eccsDataTable):
               return ''
            else:
-              return "FileNotFound: ECCS2 script has not been executed for this day"
+              return jsonify(error='FileNotFound: ECCS2 script has not been executed for this day')
 
        for line in lines:
           # Strip the line feed and carriage return characters
