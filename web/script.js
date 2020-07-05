@@ -56,7 +56,6 @@ function format ( d ) {
             '<td><a href="'+d.sp2.wayflessUrl+'" target="_blank">Click to retry</a></td>'+
         '</tr>'+
     '</table>';
-    }
 }
 
 function getPastResults() {
