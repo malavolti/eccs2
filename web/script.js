@@ -1,5 +1,6 @@
 // Global URL
-var url = "/eccs2/api/eccsresults?eccsdt=1";
+//var url = "/eccs2/api/eccsresults?eccsdt=1";
+var url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
 var table;
 
 // use URL constructor and return hostname

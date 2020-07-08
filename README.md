@@ -42,21 +42,45 @@
 7. Create link of Python3.8 for scripts:
    * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
 
-
-* `sudo apt install chromium chromium-l10n git jq`
-* `python3 -m pip install --user --upgrade pip virtualenv`
-* `python3 -m venv eccs2venv`
-* `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
-  * `python3 -m pip install --upgrade wheel setuptools certifi selenium urllib3 flask flask-jsonpify flask-restful`
-  * `cd ~ ; git clone https://github.com/malavolti/eccs2.git`
-  * `cd eccs2`
-  * `cp eccs2properties.py.template eccs2properties.py` (and change it with your needs)
-  * `./runEccs2.py`
-
-# API Development Server
+# Install Apache Web Server + WSGI for ECCS2 API
 
 * `sudo apt install libapache2-mod-wsgi-py3 python3-dev`
 * `sudo a2enmod wsgi`
+
+# Install requirements for uWSGI used by ECCS2 API:
+* `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python-dev`
+
+# Install Chromium used by Selenium
+
+* `sudo apt install chromium chromium-l10n git jq`
+
+# Install ECCS2
+
+* `cd ~ ; git clone https://github.com/malavolti/eccs2.git`
+* `cd eccs2`
+* `python3.8 -m pip install --user --upgrade virtualenv`
+* `virtualenv -p python38 eccs2venv`
+* `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
+  * `pip install --upgrade pip uwsgi`
+  * `pip install -r requirements.txt`
+
+# Configure ECCS2
+
+* `cp eccs2properties.py.template eccs2properties.py` (and change it on your needs)
+* `sudo cp eccs2.service /etc/systemd/system/eccs2.service`
+* `sudo systemctl daemon-reload`
+* `sudo systemctl enable eccs2.service`
+* `sudo crontab -u debian -e`
+
+  ```bash
+  0 0 * * * /bin/bash /opt/eccs2/cleanAndRunEccs2.sh > /opt/eccs2/logs/eccs2cron.log 2>&1  
+  ```
+
+# Run ECCS2
+  * `./runEccs2.py` or `./cleanAndRunEccs2.py`
+
+# API Development Server
+
 * `cd ~/eccs2 ; ./api.py`
 
 # API
@@ -96,3 +120,7 @@
 
 * `sudo a2ensite eccs2.conf`
 * `sudo systemctl reload apache2.service`
+
+# UTILITY FOR WEB INTERFACE
+
+The available dates are provided by the first and the last file created into the `output/` directory

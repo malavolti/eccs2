@@ -1,15 +1,33 @@
+<?php
+$directory = "../output";
+$files = scandir ($directory);
+$firstFile = $files[3]; // [0] = '.' ; [1] = '..' ; [2] = '.gitignore'
+
+$str2strip = array("eccs2_", ".log");
+$firstDate = str_replace($str2strip, "", $firstFile);
+
+$latest_ctime = 0;
+$latest_filename = '';
+$d = dir($directory);
+while (false !== ($entry = $d->read())) {
+$filepath = "{$directory}/{$entry}";
+//Check whether the entry is a file etc.:
+    if(is_file($filepath) && filectime($filepath) > $latest_ctime) {
+    $latest_ctime = filectime($filepath);
+    $latest_filename = $entry;
+    }//end if is file etc.
+}//end while going over files in excel_uploads dir.
+$lastDate = str_replace($str2strip, "", $latest_filename);
+?>
+
 <!DOCTYPE html>
 <html>
    <head>
- 
-      <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>
-      <script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-      <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
-
-      <script type="text/javascript" src="script.js"></script>
-      <link href="style.css" rel="stylesheet" type="text/css" />
-
     <meta charset=utf-8 />
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
+    <link href="style.css" rel="stylesheet" type="text/css" />
     <title>eduGAIN Connectivity Check Service 2</title>
   </head>
   <body>
@@ -19,7 +37,7 @@
       <input type="checkbox" name="status" value="OK">OK</input>
       <input type="checkbox" name="status" value="DISABLE">DISABLE</input>
       <button style="float:right;" onclick="getPastResults()">Go</button>
-      <input style="float:right;" type="date" id="myDate" min="2020-07-03" max="<?php echo date("Y-m-d")?>" value="<?php echo date("Y-m-d")?>"/>
+      <input style="float:right;" type="date" id="myDate" min="<?php echo $firstDate ?>" max="<?php echo $lastDate ?>" value="<?php echo $lastDate ?>"/>
     </div>
     <hr>
     <button id="btn-show-all-children" type="button">Expand All</button>
@@ -39,5 +57,8 @@
         </thead>
       </table>
     </div>
+    <script type="text/javascript" src="script.js" /></script>
   </body>
 </html>
+
+
