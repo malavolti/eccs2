@@ -4,11 +4,12 @@ import json
 import logging
 import re
 
-from eccs2properties import DAY, ECCS2LOGSDIR, ECCS2OUTPUTDIR
-#from flask.logging import default_handler
+from eccs2properties import DAY, ECCS2LOGSDIR, ECCS2OUTPUTDIR, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
-from utils import getLogger
+from utils import getLogger, getListFeds, getRegAuthDict
+
+#from eccs2properties import ECCS2FAILEDCMD, ECCS2FAILEDCMDIDP, ECCS2STDOUT, ECCS2STDERR, ECCS2STDOUTIDP, ECCS2STDERRIDP, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE
 
 app = Flask(__name__)
 api = Api(app)
@@ -35,7 +36,7 @@ def existsInFile(file_path, value, research_item, eccsDataTable):
         if (eccsDataTable):
            return ''
         else:
-           return jsonify(error='FileNotFound: ECCS2 script has not been executed for this day')
+           return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
 
     for line in lines:
         aux = json.loads(line)
@@ -62,7 +63,6 @@ class EccsResults(Resource):
 
        file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,DAY)
        date = DAY
-       pretty = 0
        status = None
        idp = None
        reg_auth = None
@@ -96,7 +96,7 @@ class EccsResults(Resource):
            if (eccsDataTable):
               return ''
            else:
-              return jsonify(error='FileNotFound: ECCS2 script has not been executed for this day')
+              return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
 
        for line in lines:
           # Strip the line feed and carriage return characters
@@ -139,7 +139,76 @@ class EccsResults(Resource):
 # /eccs2/api/fedstats
 class FedStats(Resource):
    def get(self):
-       return {'fedstats':'It Works!'}
+       list_feds = getListFeds(ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE)
+       regAuthDict = getRegAuthDict(list_feds)
+
+       file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,DAY)
+       date = DAY
+       reg_auth = None
+       eccsDataTable = False
+
+       if ('date' in request.args):
+          date = request.args['date']
+          file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,date)
+       if ('reg_auth' in request.args):
+          reg_auth = request.args['reg_auth']
+          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable)):
+             return jsonify(error="Registration Authority not found")
+
+       lines = []
+       results = []
+       try:
+          with open(file_path,"r",encoding="utf-8") as fo:
+               lines = fo.readlines()
+
+       except FileNotFoundError as e:
+           if (eccsDataTable):
+              return ''
+           else:
+              return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
+
+       if (reg_auth):
+          resultDict = {'date': date, 'registrationAuthority': reg_auth, 'OK': 0, 'ERROR': 0, 'DISABLED': 0}
+
+          for line in lines:
+              # Strip the line feed and carriage return characters
+              line = line.rstrip("\n\r")
+
+              # Loads the json line into aux
+              aux = json.loads(line)
+
+              if (aux['registrationAuthority'] == reg_auth):
+                 if (aux['status'] == "OK"):
+                    resultDict['OK'] = resultDict['OK'] + 1
+                 if (aux['status'] == "ERROR"):
+                    resultDict['ERROR'] = resultDict['ERROR'] + 1
+                 if (aux['status'] == "DISABLED"):
+                    resultDict['DISABLED'] = resultDict['DISABLED'] + 1
+
+          results.append(resultDict)
+          return jsonify(results)
+
+       else:
+           for name,regAuth in regAuthDict.items():
+               resultDict = {'date': date, 'registrationAuthority': regAuth, 'OK': 0, 'ERROR': 0, 'DISABLED': 0}
+
+               for line in lines:
+                   # Strip the line feed and carriage return characters
+                   line = line.rstrip("\n\r")
+
+                   # Loads the json line into aux
+                   aux = json.loads(line)
+
+                   if (regAuth == aux['registrationAuthority']):
+                      if (aux['status'] == "OK"):
+                         resultDict['OK'] = resultDict['OK'] + 1
+                      if (aux['status'] == "ERROR"):
+                         resultDict['ERROR'] = resultDict['ERROR'] + 1
+                      if (aux['status'] == "DISABLED"):
+                         resultDict['DISABLED'] = resultDict['DISABLED'] + 1
+
+               results.append(resultDict)
+           return jsonify(results)
 
 # Routes
 api.add_resource(Test, '/test') # Route_1
