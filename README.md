@@ -124,4 +124,4 @@ The available dates are provided by the first and the last file created into the
 
 To clean the ECCS2 results from files older than last 7 days use:
 
-* `clean7daysOlderFiles.sh`
+* `clean7daysOldFiles.sh`
