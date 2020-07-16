@@ -1,4 +1,4 @@
-# EduGAIN Connectivity Check Service 2
+# EduGAIN Connectivity Check Service 2 - ECCS2
 
 # Requirements Hardware
 
@@ -10,7 +10,7 @@
 # Requirements Software
 
 * Apache Server + WSGI
-* Python 3.8
+* Python 3.8 (tested with v3.8.3)
 * Selenim + Chromium Web Brower
 
 # HOWTO Install and Configure
@@ -42,17 +42,16 @@
 7. Create link of Python3.8 for scripts:
    * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
 
-# Install Apache Web Server + WSGI for ECCS2 API
-
-* `sudo apt install libapache2-mod-wsgi-py3 python3-dev`
-* `sudo a2enmod wsgi`
 
 # Install requirements for uWSGI used by ECCS2 API:
-* `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python-dev`
+
+* `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev`
+
 
 # Install Chromium used by Selenium
 
 * `sudo apt install chromium chromium-l10n git jq`
+
 
 # Install ECCS2
 
@@ -66,61 +65,63 @@
 
 # Configure ECCS2
 
-* `cp eccs2properties.py.template eccs2properties.py` (and change it on your needs)
-* `sudo cp eccs2.service /etc/systemd/system/eccs2.service`
-* `sudo systemctl daemon-reload`
-* `sudo systemctl enable eccs2.service`
-* `sudo crontab -u debian -e`
+1. Configure ECCS2 properties
+   * `vim eccs2properties.py` (and change it on your needs)
 
-  ```bash
-  0 0 * * * /bin/bash /opt/eccs2/cleanAndRunEccs2.sh > /opt/eccs2/logs/eccs2cron.log 2>&1  
-  ```
+2. Configure ECCS2 cron job for your local user (`debian` into this example):
+   * `sudo crontab -u debian -e`
 
-# Run ECCS2
-  * `./runEccs2.py` or `./cleanAndRunEccs2.py`
+     ```bash
+     0 4 * * * /bin/bash /opt/eccs2/cleanAndRunEccs2.sh > /opt/eccs2/logs/eccs2cron.log 2>&1  
+     ```
 
-# API Development Server
+3. Configure the ECCS2 systemd service to enable its API:
+   * `sudo cp eccs2.service /etc/systemd/system/eccs2.service`
+   * `sudo systemctl daemon-reload`
+   * `sudo systemctl enable eccs2.service`
+   * `sudo systemctl start eccs2.service`
+
+4. Configure Apache for the ECCS2 Web side:
+   * `sudo cp eccs2.conf /etc/apache2/conf-available/eccs2.conf`
+   * `sudo a2enconf eccs2.conf`
+   * `sudo systemctl reload apache2.service`
+
+
+# Run ECCS2 manually
+
+  * `cd ~/eccs2`
+  * `./cleanAndRunEccs2.py` (to run a full and clean check)
+  * `./runEccs2.py` (to run a full check on the existing inputs)
+  * `./runEccs2.py --idp <IDP-ENTITYID>` (to run check on a single IdP)
+  * `./runEccs2.py --idp --test` (to run a full check on a single IdP without effects)
+  * `./runEccs2.py --idp <IDP-ENTITYID> --test` (to run check on a single IdP without effects)
+
+
+# ECCS2 API Development Server
 
 * `cd ~/eccs2 ; ./api.py`
 
-# API
 
-* `/eccs/test` (Trivial Test)
-* `/eccs/checks` (Return the results of the last checks)
-* `/eccs/checks?<parameter>=<value>`:
+# ECCS2 API JSON
+
+* `/api/test` (Trivial Test)
+* `/api/eccsresults` (Return the results of the last check ready for ECCS Gui)
+* `/api/eccsresults?<parameter>=<value>`:
   * `date=2020-02-20` (select date)
-  * `idp=Any%20words%20do%20you%20like%20url%20encoded`
-  * `status=`
+  * `idp=https://idp.example.org/idp/shibboleth`  (select a specific idp)
+  * `status=` (select specific ECCS2 status)
     * 'OK'
-    * 'TIMEOUT'
-    * 'No-eduGAIN-Metadata'
-    * 'Form-Invalid'
-    * 'Excluded'
-* /eccs/eccsresults (Return the results of the last check ready for ECCS Gui)
+    * 'ERROR'
+    * 'DISABLED'
+  * `reg_auth=https://reg.auth.example.org` (select a specific Registration Authority)
+* `/api/fedstats`
+* `/api/fedstats?reg_auth=https://reg.auth.example.org`:
 
-# APACHE CONFIGURATION
-
-* `sudo vim /etc/apache2/sites-availabled/eccs2.conf
-
-  ```apache
-  <IfModule mod_alias.c>
-     Alias /eccs2 /opt/eccs2/web
-     Alias /eccs2html /opt/eccs2/html
-
-     <Directory /opt/eccs2/web>
-        DirectoryIndex index.php
-        Require all granted
-     </Directory>
-
-     <Directory /opt/eccs2/html>
-        Require all granted
-     </Directory>
-  </IfModule>
-  ```
-
-* `sudo a2ensite eccs2.conf`
-* `sudo systemctl reload apache2.service`
 
 # UTILITY FOR WEB INTERFACE
 
 The available dates are provided by the first and the last file created into the `output/` directory
+
+To clean the ECCS2 results from files older than last 7 days use:
+
+* `clean7daysOlderFiles.sh`

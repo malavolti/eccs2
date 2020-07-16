@@ -9,8 +9,6 @@ from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 from utils import getLogger, getListFeds, getRegAuthDict
 
-#from eccs2properties import ECCS2FAILEDCMD, ECCS2FAILEDCMDIDP, ECCS2STDOUT, ECCS2STDERR, ECCS2STDOUTIDP, ECCS2STDERRIDP, ECCS2DIR, ECCS2NUMPROCESSES, ECCS2LISTIDPSURL, ECCS2LISTIDPSFILE, ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE
-
 app = Flask(__name__)
 api = Api(app)
 
@@ -27,8 +25,8 @@ def buildEmailAddress(listContacts):
  
     return hrefList
 
-
-def existsInFile(file_path, value, research_item, eccsDataTable):
+# Research the value of the research_item into ECCS2 output files
+def existsInFile(file_path, value, research_item, eccsDataTable, date):
     try:
        with open(file_path,"r",encoding="utf-8") as fo:
             lines = fo.readlines()
@@ -36,7 +34,7 @@ def existsInFile(file_path, value, research_item, eccsDataTable):
         if (eccsDataTable):
            return ''
         else:
-           return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
+           return jsonify(error='FileNotFound: ECCS2 script has not been executed on %s yet' % date)
 
     for line in lines:
         aux = json.loads(line)
@@ -51,13 +49,13 @@ def existsInFile(file_path, value, research_item, eccsDataTable):
 
 ### Classes
 
-# Test
+# /api/test
 class Test(Resource):
     def get(self):
         return {'test':'It Works!'}
 
 
-# /eccs2/api/eccsresults
+# /api/eccsresults
 class EccsResults(Resource):
     def get(self):
 
@@ -79,11 +77,11 @@ class EccsResults(Resource):
               return jsonify(error="Incorrect status provided. It can be 'ok','disabled','error'")
        if 'idp' in request.args:
           idp = request.args['idp']
-          if (not existsInFile(file_path, idp, "entityID", eccsDataTable)):
+          if (not existsInFile(file_path, idp, "entityID", eccsDataTable, date)):
              return jsonify(error="Identity Provider not found with the entityID: %s" % idp)
        if 'reg_auth' in request.args:
           reg_auth = request.args['reg_auth']
-          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable)):
+          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable, date)):
              return jsonify(error="Identity Providers not found with the Registration Authority: %s" % reg_auth)
 
        lines = []
@@ -136,7 +134,7 @@ class EccsResults(Resource):
        return jsonify(results)
 
 
-# /eccs2/api/fedstats
+# /api/fedstats
 class FedStats(Resource):
    def get(self):
        list_feds = getListFeds(ECCS2LISTFEDSURL, ECCS2LISTFEDSFILE)
@@ -152,7 +150,7 @@ class FedStats(Resource):
           file_path = "%s/eccs2_%s.log" % (ECCS2OUTPUTDIR,date)
        if ('reg_auth' in request.args):
           reg_auth = request.args['reg_auth']
-          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable)):
+          if (not existsInFile(file_path, reg_auth, "registrationAuthority", eccsDataTable, date)):
              return jsonify(error="Registration Authority not found")
 
        lines = []
@@ -165,7 +163,7 @@ class FedStats(Resource):
            if (eccsDataTable):
               return ''
            else:
-              return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
+              return jsonify(error='FileNotFound: ECCS2 script has not been executed on %s yet' % date)
 
        if (reg_auth):
           resultDict = {'date': date, 'registrationAuthority': reg_auth, 'OK': 0, 'ERROR': 0, 'DISABLED': 0}
@@ -217,6 +215,7 @@ api.add_resource(FedStats, '/fedstats') # Route_3
 
 if __name__ == '__main__':
 
+   # Useful only for API development Server
    #app.config['JSON_AS_ASCII'] = True
    #app.logger.removeHandler(default_handler)
    #app.logger = getLogger("eccs2api.log", ECCS2LOGSDIR, "w", "INFO")
