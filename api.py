@@ -94,7 +94,7 @@ class EccsResults(Resource):
            if (eccsDataTable):
               return ''
            else:
-              return jsonify(error='FileNotFound: ECCS2 script has not been executed on this day')
+              return jsonify(error='FileNotFound: ECCS2 script has not been executed on %s' % date)
 
        for line in lines:
           # Strip the line feed and carriage return characters

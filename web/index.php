@@ -6,18 +6,10 @@ $firstFile = $files[3]; // [0] = '.' ; [1] = '..' ; [2] = '.gitignore'
 $str2strip = array("eccs2_", ".log");
 $firstDate = str_replace($str2strip, "", $firstFile);
 
-$latest_ctime = 0;
-$latest_filename = '';
-$d = dir($directory);
-while (false !== ($entry = $d->read())) {
-$filepath = "{$directory}/{$entry}";
-//Check whether the entry is a file etc.:
-    if(is_file($filepath) && filectime($filepath) > $latest_ctime) {
-    $latest_ctime = filectime($filepath);
-    $latest_filename = $entry;
-    }//end if is file etc.
-}//end while going over files in excel_uploads dir.
-$lastDate = str_replace($str2strip, "", $latest_filename);
+$files = scandir($directory, SCANDIR_SORT_DESCENDING);
+$lastFile = $files[0];
+
+$lastDate = str_replace($str2strip, "", $lastFile);
 ?>
 
 <!DOCTYPE html>
