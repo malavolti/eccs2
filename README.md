@@ -1,5 +1,48 @@
 # EduGAIN Connectivity Check Service 2 - ECCS2
 
+The purpose of the eduGAIN Connectivity Check is to identify eduGAIN Identity Providers (IdP) that are not properly configured. In particular it checks if an IdP properly loads and consumes SAML2 metadata which contains the eduGAIN Service Providers (SP). The check results are published on the public eduGAIN Connectivity Check web page (https://technical.edugain.org/eccs2/). The main purpose is to increase the service overall quality and user experience of the eduGAIN interfederation service by making federation and Identity Provider operators aware of configuration problems.
+
+The check is performed by sending a SAML authentication request to each eduGAIN IdP and then follow the various HTTP redirects. The expected result is a login form that allows users to authenticate (typically with username/password) or an error message of some form. For those Identity Providers that output an error message, it can be assumed that they don't consume eduGAIN metadata properly or that they suffer from another configuration problem. There are some cases where the check will generate false positives, therefore IdPs can be excluded from checks as is described below.
+
+The Identity Providers are checked once per day. Therefore, the login requests should not have any significant effect on the log entries/statistics of an Identity Provider. Also, no actual login is performed because the check cannot authenticate users due to missing username and password for the IdPs. Only Identity Providers are checked but not the Service Providers.
+
+# Check Performed on the IdPs
+
+The check executed by the service follows these steps:
+
+1. It retrieves the eduGAIN IdPs from eduGAIN Operator Team database via a JSON interface
+
+2. For each IdP that is was not manually disabled by the eduGAIN Operations Team, the check creates a Wayfless URL for each SP involved and retrieves the IdP login page. It expects to find the HTML form with a username and password field. Therefore, no complete login will happen at the Identity Provider because the check stops at the login page.
+The SPs used for the check are "Test SP shib 2.4" (https://sp24-test.garr.it/shibboleth) from IDEM GARR AAI and the "AAI Viewer Interfederation Test" (https://attribute-viewer.aai.switch.ch/interfederation-test/shibboleth) from SWITCHaai. These SPs might change in the future if needed.
+The SAML authenticatin request is not signed. Therefore, authentication request for any eduGAIN SP could be created because the SP's private key is not needed.
+
+# Limitations
+
+There are some situations where the check cannot work reliably. In those cases it is possible to disable the check for a particular IdP. The so far known cases where the check might generate a false negative are:
+
+* IdP does not support HTTP or HTTPS with at least SSLv3 or TLS1 or newer (these IdPs are insecure anyway)
+* IdP is part of a Hub & Spoke federation (some of them manually have to first approve eduGAIN SPs)
+* IdP does not use web-based login form (e.g. HTTP Basic Authentication or X.509 login)
+
+# Disable Checks
+
+In cases where an IdP cannot be reliably checked, it might be necessary to [disable the checks for an IdP](mailto:edugain@geant.org?subject=%5BECCS%5D%20Disable%20check%20for%20IdP&amp;body=Dear%20eduGAIN-ECCS%20Admins%0A%0APlease%20exclude%20the%20Identity%20Provider%20with%20the%20following%20entityID%20from%20the%20ECCS%20checks%3A%0A%23entityID%23%0A%0AThe%20reason%20why%20this%20IdP%20should%20be%20excluded%20is%20...%0A%0ABest%20regards%2C%0A%23Your-Name%23).
+
+# On-line interface
+
+The eduGAIN Connectivity Check web pages is available at: https://dev-mm.aai-test.garr.it/eccs2
+
+The tool uses following status for IdPs:
+
+* ERROR (red):
+  * The IdP's response contains an HTTP Error or the web page returned does not look like a login page. The most probable causes for this error are HTTP errors (e.g.: 404 error)
+  * The IdP most likely does not consume the eduGAIN metadata correctly or it hasn't does not return a web page that looks like a login form. A typical case that falls into this category is when an IdP returns a message "No return endpoint available for relying party" or "No metadata found for relying party".
+* OK (green):
+  * The IdP most likely correctly consumes eduGAIN metadata and returns a valid login page. This is no guarantee that login on this IdP works for all eduGAIN services but if the check is passed for an IdP, this is probable.
+* DISABLE (white)
+  * The IdP is excluded from checks because it cannot be checked reliably (see limitations below) affected by some problems that prevent them to consume correctly eduGAIN metadata. The "Page Source" column, when an entity is disabled, shows the reason of the disabling.
+
+
 # Requirements Hardware
 
 * OS: Debian 9,10 (tested)
