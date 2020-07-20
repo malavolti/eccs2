@@ -85,7 +85,7 @@ def checkIdP(sp,idp,test):
          with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
               html.write(page_source)
       else:
-         print("[page_source of %s]\n%s" % (fqdn_idp,page_source))
+         print("\n[page_source of '%s' for sp '%s']\n%s" % (fqdn_idp,fqdn_sp,page_source))
 
    except TimeoutException as e:
      if (test is not True):
@@ -93,7 +93,7 @@ def checkIdP(sp,idp,test):
         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
              html.write("")
      else:
-        print("[page_source of %s]\nNo source code" % (fqdn_idp))
+        print("\n[page_source of '%s' for sp '%s']\nNo source code" % (fqdn_idp,fqdn_sp))
      return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
 
    except Exception as e:
