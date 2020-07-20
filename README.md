@@ -63,10 +63,11 @@
   * `pip install --upgrade pip uwsgi`
   * `pip install -r requirements.txt`
 
+
 # Configure ECCS2
 
 1. Configure ECCS2 properties
-   * `vim eccs2properties.py` (and change it on your needs)
+   * `vim eccs2properties.py` (and change it upon your needs)
 
 2. Configure ECCS2 cron job for your local user (`debian` into this example):
    * `sudo crontab -u debian -e`
@@ -89,12 +90,13 @@
 
 # Run ECCS2 manually
 
-  * `cd ~/eccs2`
   * `./cleanAndRunEccs2.py` (to run a full and clean check)
   * `./runEccs2.py` (to run a full check on the existing inputs)
   * `./runEccs2.py --idp <IDP-ENTITYID>` (to run check on a single IdP)
-  * `./runEccs2.py --idp --test` (to run a full check on a single IdP without effects)
+  * `./runEccs2.py --test` (to run a full check without effects)
   * `./runEccs2.py --idp <IDP-ENTITYID> --test` (to run check on a single IdP without effects)
+
+  The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_YYYY-MM-DD.log` file.
 
 
 # ECCS2 API Development Server
@@ -106,9 +108,9 @@
 
 * `/api/test` (Trivial Test)
 * `/api/eccsresults` (Return the results of the last check ready for ECCS Gui)
-* `/api/eccsresults?<parameter>=<value>`:
+* `/api/eccsresults?<parameter1>=<value1>&<parameter2>=<value2>`:
   * `date=2020-02-20` (select date)
-  * `idp=https://idp.example.org/idp/shibboleth`  (select a specific idp)
+  * `idp=https://idp.example.org/idp/shibboleth` (select a specific idp)
   * `status=` (select specific ECCS2 status)
     * 'OK'
     * 'ERROR'
