@@ -45,7 +45,7 @@ The tool uses following status for IdPs:
 
 # Requirements Hardware
 
-* OS: Debian 9,10 (tested)
+* OS: Debian 9, CentOS 7.8 (tested)
 * HDD: 10 GB
 * RAM: 4 GB
 * CPU: >= 2 vCPU
@@ -58,7 +58,20 @@ The tool uses following status for IdPs:
 
 # HOWTO Install and Configure
 
-# Install Python 3.8.x
+## Install Python 3.8.x
+
+### CentOS 7 requirements
+
+1. Update the system packages:
+   * `sudo yum -y update`
+
+2. Install the Development Tools:
+   * `sudo yum -y groupinstall "Development Tools"`
+
+3. Install needed packages to build python:
+   * `sudo yum -y install openssl-devel bzip2-devel libffi-devel wget`
+
+### Debian requirements
 
 1. Update the system packages:
    * `sudo apt update ; sudo apt upgrade -y`
@@ -66,73 +79,104 @@ The tool uses following status for IdPs:
 2. Install needed packages to build python:
    * `sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev`
 
-3. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/:
-   * `sudo wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
+### Python 3.8
 
-4. Extract Python source package:
-   * `sudo cd /usr/local/src/`
-   * `sudo tar xzf Python-3.8.3.tar.gz`
+1. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/:
+   * `wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
 
-5. Build Python from the source package:
-   * `sudo cd /usr/local/src/Python-3.8.3`
-   * `sudo ./configure --enable-optimizations`
-   * `sudo make -j 4`
+2. Extract Python source package:
+   * `cd /usr/local/src/`
+   * `tar xzf Python-3.8.3.tar.gz`
 
-6. Install Python 3.8.x (without replacing the system `python3` command) under `/usr/local/bin/python3.8`:
+3. Build Python from the source package:
+   * `cd /usr/local/src/Python-3.8.3`
+   * `./configure --enable-optimizations`
+   * `make -j 4`
+
+4. Install Python 3.8.x (without replacing the system `python3` command) under `/usr/local/bin/python3.8`:
    * `sudo make altinstall`
    * `python3.8 --version`
 
-7. Create link of Python3.8 for scripts:
+5. Create link of Python3.8 for scripts:
    * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
-
 
 # Install requirements for uWSGI used by ECCS2 API:
 
-* `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev`
+* Debian:
+  * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
+* CentOS:
+  * `sudo yum install mod_proxy_uwsgi unzip`
+  * `sudo getsebool -a | grep httpd`
+  * Enable ECCS2 for SELinux
+    * `semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
+    * `restorecon -R -a /opt/eccs2/`
 
+# Install Selenium & Chromedriver
 
-# Install Chromium used by Selenium
+* python3.8 -m pip install --upgrade pip
+* python3.8 -m pip install selenium virtualenv uwsgi
+* sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip
+* cd /usr/bin/
+* sudo unzip /usr/local/src/chromedriver_linux64.zip
 
-* `sudo apt install chromium chromium-l10n git jq`
+Note: Pay attetion on the chromedriver version:
+* Debian 9 (stretch):
+  * `chromium -version` => Chromium 73.0.3683.75 => https://chromedriver.storage.googleapis.com/73.0.3683.68/chromedriver_linux64.zip
+* CentOS 7.8:
+  * `chromium-browser -version` => Chromium 83.0.4103.116 => https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip
 
+# Install Chromium needed by Selenium
 
-# Install ECCS2
+* Debian:
+  * `sudo apt install chromium git jq`
 
-* `cd ~ ; git clone https://github.com/malavolti/eccs2.git`
+* CentOS:
+  * `sudo yum install -y epel-release`
+  * `sudo yum install -y chromium git jq`
+
+# ECCS2
+
+## Install
+
+* `cd /opt ; git clone https://github.com/malavolti/eccs2.git`
 * `cd eccs2`
-* `python3.8 -m pip install --user --upgrade virtualenv`
 * `virtualenv -p python38 eccs2venv`
 * `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
-  * `pip install --upgrade pip uwsgi`
+  * `pip install --upgrade pip`
   * `pip install -r requirements.txt`
 
-
-# Configure ECCS2
+## Configure
 
 1. Configure ECCS2 properties
    * `vim eccs2properties.py` (and change it upon your needs)
 
 2. Configure ECCS2 cron job for your local user (`debian` into this example):
-   * `sudo crontab -u debian -e`
+   * `sudo crontab -u debian -e` (Debian) or `sudo crontab -u centos -e` (CentOS)
 
      ```bash
      0 4 * * * /bin/bash /opt/eccs2/cleanAndRunEccs2.sh > /opt/eccs2/logs/eccs2cron.log 2>&1  
      ```
 
 3. Configure the ECCS2 systemd service to enable its API:
-   * `sudo cp eccs2.service /etc/systemd/system/eccs2.service`
+   * `vim /opt/eccs2/eccs2.ini` (and change the "`User`" and the "`Group`" values)
+   * `vim /opt/eccs2/eccs2.service` (and change the "`User`" and the "`Group`" values)
+   * `sudo cp /opt/eccs2/eccs2.service /etc/systemd/system/eccs2.service`
    * `sudo systemctl daemon-reload`
    * `sudo systemctl enable eccs2.service`
    * `sudo systemctl start eccs2.service`
 
 4. Configure Apache for the ECCS2 Web side:
-   * `sudo cp eccs2.conf /etc/apache2/conf-available/eccs2.conf`
-   * `sudo a2enconf eccs2.conf`
-   * `sudo systemctl reload apache2.service`
+   * Debian:
+     * `sudo cp /opt/eccs2/eccs2-debian.conf /etc/apache2/conf-available/eccs2.conf`
+     * `sudo a2enconf eccs2.conf`
+     * `sudo systemctl restart apache2.service`
+   * CentOS:
+     * `sudo cp /opt/eccs2/eccs2-centos.conf /etc/apache2/conf-available/eccs2.conf`
+     * `sudo systemctl restart httpd.service`
 
+## Execute
 
-# Run ECCS2 manually
-
+  * `cd /opt/eccs2`
   * `./cleanAndRunEccs2.py` (to run a full and clean check)
   * `./runEccs2.py` (to run a full check on the existing inputs)
   * `./runEccs2.py --idp <IDP-ENTITYID>` (to run check on a single IdP)
@@ -141,11 +185,9 @@ The tool uses following status for IdPs:
 
   The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_YYYY-MM-DD.log` file.
 
-
 # ECCS2 API Development Server
 
-* `cd ~/eccs2 ; ./api.py`
-
+* `cd /opt/eccs2 ; ./api.py`
 
 # ECCS2 API JSON
 
