@@ -107,17 +107,17 @@ The tool uses following status for IdPs:
 * CentOS:
   * `sudo yum install mod_proxy_uwsgi unzip`
   * `sudo getsebool -a | grep httpd`
-  * Enable ECCS2 for SELinux
+  * Enable ECCS2 for SELinux:
     * `semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
     * `restorecon -R -a /opt/eccs2/`
 
 # Install Selenium & Chromedriver
 
-* python3.8 -m pip install --upgrade pip
-* python3.8 -m pip install selenium virtualenv uwsgi
-* sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip
-* cd /usr/bin/
-* sudo unzip /usr/local/src/chromedriver_linux64.zip
+* `python3.8 -m pip install --upgrade pip`
+* `python3.8 -m pip install selenium virtualenv uwsgi`
+* `sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip`
+* `cd /usr/bin/`
+* `sudo unzip /usr/local/src/chromedriver_linux64.zip`
 
 Note: Pay attetion on the chromedriver version:
 * Debian 9 (stretch):
@@ -147,7 +147,7 @@ Note: Pay attetion on the chromedriver version:
 
 ## Configure
 
-1. Configure ECCS2 properties
+1. Configure ECCS2 properties:
    * `vim eccs2properties.py` (and change it upon your needs)
 
 2. Configure ECCS2 cron job for your local user (`debian` into this example):
@@ -171,7 +171,7 @@ Note: Pay attetion on the chromedriver version:
      * `sudo a2enconf eccs2.conf`
      * `sudo systemctl restart apache2.service`
    * CentOS:
-     * `sudo cp /opt/eccs2/eccs2-centos.conf /etc/apache2/conf-available/eccs2.conf`
+     * `sudo cp /opt/eccs2/eccs2-centos.conf /etc/httpd/conf.d/eccs2.conf`
      * `sudo systemctl restart httpd.service`
 
 ## Execute
@@ -184,6 +184,8 @@ Note: Pay attetion on the chromedriver version:
   * `./runEccs2.py --idp <IDP-ENTITYID> --test` (to run check on a single IdP without effects)
 
   The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_YYYY-MM-DD.log` file.
+
+  The check will run a second time for those IdPs that fail on the first execution of the script. If something prevent the good execution of the check, the `/opt/eccs2/output/failed-cmd.sh` file will contain the command that failed 2 times.
 
 # ECCS2 API Development Server
 
