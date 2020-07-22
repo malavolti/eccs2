@@ -1,5 +1,31 @@
 # EduGAIN Connectivity Check Service 2 - ECCS2
 
+1. [Introduction](#introduction)
+2. [Check Performed on the IdPs](#check-performed-on-the-idps)
+3. [Limitations](#limitations)
+4. [Disable Checks](#disable-checks)
+5. [On-line interface](#on-line-interface)
+6. [Requirements Hardware](#requirements-hardware)
+7. [Requirements Software](#requirements-software)
+8. [HOWTO Install and Configure](#howto-install-and-configure)
+   * [Install Python 3.8.x](#install-python-38x)
+     + [CentOS 7 requirements](#centos-7-requirements)
+     + [Debian requirements](#debian-requirements)
+     + [Python 3.8](#python-38)
+9. [Install requirements for uWSGI used by ECCS2 API](#install-requirements-for-uwsgi-used-by-eccs2-api)
+10. [Install Selenium and Chromedriver](#install-selenium-and-chromedriver)
+11. [Install Chromium needed by Selenium](#install-chromium-needed-by-selenium)
+12. [ECCS2](#eccs2)
+    * [Install](#install)
+    * [Configure](#configure)
+    * [Execute](#execute)
+13. [ECCS2 API Development Server](#eccs2-api-development-server)
+14. [ECCS2 API JSON](#eccs2-api-json)
+15. [Utility for web interface](#utility-for-web-interface)
+16. [Authors](#authors)
+
+# Introduction
+
 The purpose of the eduGAIN Connectivity Check is to identify eduGAIN Identity Providers (IdP) that are not properly configured. In particular it checks if an IdP properly loads and consumes SAML2 metadata which contains the eduGAIN Service Providers (SP). The check results are published on the public eduGAIN Connectivity Check web page (### NOT-AVAILABLE-YET ###). The main purpose is to increase the service overall quality and user experience of the eduGAIN interfederation service by making federation and Identity Provider operators aware of configuration problems.
 
 The check is performed by sending a SAML authentication request to each eduGAIN IdP and then follow the various HTTP redirects. The expected result is a login form that allows users to authenticate (typically with username/password) or an error message of some form. For those Identity Providers that output an error message, it can be assumed that they don't consume eduGAIN metadata properly or that they suffer from another configuration problem. There are some cases where the check will generate false positives, therefore IdPs can be excluded from checks as is described below.
@@ -26,11 +52,11 @@ There are some situations where the check cannot work reliably. In those cases i
 
 # Disable Checks
 
-In cases where an IdP cannot be reliably checked, it might be necessary to [disable the checks for an IdP](mailto:edugain@geant.org?subject=%5BECCS%5D%20Disable%20check%20for%20IdP&amp;body=Dear%20eduGAIN-ECCS%20Admins%0A%0APlease%20exclude%20the%20Identity%20Provider%20with%20the%20following%20entityID%20from%20the%20ECCS%20checks%3A%0A%23entityID%23%0A%0AThe%20reason%20why%20this%20IdP%20should%20be%20excluded%20is%20...%0A%0ABest%20regards%2C%0A%23Your-Name%23).
+In cases where an IdP cannot be reliably checked, it is necessary to create, also empty, `eccs-disabled.txt` file on IdP's web root.
 
 # On-line interface
 
-The eduGAIN Connectivity Check web pages is available at: https://dev-mm.aai-test.garr.it/eccs2
+The test eduGAIN Connectivity Check web pages is available at: https://dev-mm.aai-test.garr.it/eccs2
 
 The tool uses following status for IdPs:
 
@@ -41,7 +67,6 @@ The tool uses following status for IdPs:
   * The IdP most likely correctly consumes eduGAIN metadata and returns a valid login page. This is no guarantee that login on this IdP works for all eduGAIN services but if the check is passed for an IdP, this is probable.
 * DISABLED (white)
   * The IdP is excluded from checks because it cannot be checked reliably (see limitations below) affected by some problems that prevent them to consume correctly eduGAIN metadata. The "Page Source" column, when an entity is disabled, shows the reason of the disabling.
-
 
 # Requirements Hardware
 
@@ -100,7 +125,7 @@ The tool uses following status for IdPs:
 5. Create link of Python3.8 for scripts:
    * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
 
-# Install requirements for uWSGI used by ECCS2 API:
+# Install requirements for uWSGI used by ECCS2 API
 
 * Debian:
   * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
@@ -110,7 +135,7 @@ The tool uses following status for IdPs:
     * `semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
     * `restorecon -R -a /opt/eccs2/`
 
-# Install Selenium & Chromedriver
+# Install Selenium and Chromedriver
 
 * `python3.8 -m pip install --upgrade pip`
 * `python3.8 -m pip install selenium virtualenv uwsgi`
@@ -207,10 +232,16 @@ Note: Pay attetion on the chromedriver version:
 * `/api/fedstats?reg_auth=https://reg.auth.example.org`:
 
 
-# UTILITY FOR WEB INTERFACE
+# Utility for web interface
 
 The available dates are provided by the first and the last file created into the `output/` directory
 
 To clean the ECCS2 results from files older than last 7 days use:
 
 * `clean7daysOldFiles.sh`
+
+# Authors
+
+## Original Author
+
+ * Marco Malavolti (marco.malavolti@garr.it)
