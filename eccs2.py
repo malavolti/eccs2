@@ -6,7 +6,7 @@ import json
 import re
 import requests
 
-from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG
+from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG,ROBOTS_USER_AGENT
 from pathlib import Path
 from selenium.common.exceptions import TimeoutException
 from urllib3.util import parse_url
@@ -26,6 +26,15 @@ def getIDPfqdn(entityIDidp):
     else:
        return entityIDidp.split(":")[-1] 
 
+# Return True if the ECCS check MUST not be run
+def checkRobots(url_robots_txt):
+    robots_txt = requests.get(url_robots_txt)
+    p = re.compile('^User-agent:\sECCS\sDisallow:\s\/\s*$', re.MULTILINE)
+    m = p.search(robots_txt.text)
+    if (m):
+       return True
+    else:
+       return False
 
 # The function check that the IdP recognized the SP by presenting its Login page.
 # If the IdP Login page contains "username" and "password" fields, than the test is passed.
@@ -51,35 +60,43 @@ def checkIdP(sp,idp,test):
    fqdn_sp = parse_url(sp)[2]
    wayfless_url = sp + idp['entityID']
 
-   exclude_idp = ""   
+   robots = ""
 
    try:
-      headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'}
-      exclude_idp = requests.get("https://%s/eccs-disabled.txt" % fqdn_idp, headers=headers, verify=False, timeout=30)   
+      headers = {
+         'User-Agent': '%s' % ROBOTS_USER_AGENT
+      }
 
-      if (exclude_idp == ""):
-         exclude_idp  = requests.get("http://%s/eccs-disabled.txt" % fqdn_idp, headers=headers, verify=False, timeout=30)
+      robots = requests.get("https://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=30)
 
-   except requests.exceptions.ConnectionError as e:
-     print("!!! ECCS-DISABLED REQUESTS CONNECTION ERROR EXCEPTION !!!")
-     #print (e.__str__())
-     exclude_idp = ""
+      if (robots == ""):
+         robots  = requests.get("http://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=30)
 
-   except requests.exceptions.Timeout as e:
-     print("!!! ECCS-DISABLED REQUESTS TIMEOUT EXCEPTION !!!")
-     #print (e.__str__())
-     exclude_idp = ""
-
-   if (exclude_idp):
+   except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.SSLError) as e:
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
       if (test is not True):
          with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-              html.write("IdP excluded from check by eccs-disabled.txt")
+             html.write("IdP excluded from check because the download of 'robots.txt' failed: %s" % e.__str__())
       else:
-         print("IdP excluded from check by eccs-disabled.txt")
+         print("IdP excluded from check because the download of 'robots.txt' failed: %s" % e.__str__())
 
       return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
+
+   if (robots):
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+
+      p = re.compile('^User-agent:\sECCS\sDisallow:\s\/\s*$', re.MULTILINE)
+      m = p.search(robots.text)
+
+      if (m):
+         if (test is not True):
+            with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+                 html.write("IdP excluded from check by robots.txt")
+         else:
+            print("IdP excluded from check by robots.txt")
+
+         return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'

@@ -39,6 +39,9 @@ ECCS2NUMPROCESSES = 25
 # The 2 SPs that will be used to test each IdP
 ECCS2SPS = ["https://sp24-test.garr.it/Shibboleth.sso/Login?entityID=", "https://attribute-viewer.aai.switch.ch/Shibboleth.sso/Login?entityID="]
 
+# ROBOTS.TXT
+ROBOTS_USER_AGENT = "ECCS/2.0 (+https://dev-mm.aai-test.garr.it/eccs2)"
+
 # Registration Authority of Federations to exclude from the check
 FEDS_BLACKLIST = [
    'http://www.surfconext.nl/',

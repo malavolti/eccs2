@@ -52,7 +52,12 @@ There are some situations where the check cannot work reliably. In those cases i
 
 # Disable Checks
 
-In cases where an IdP cannot be reliably checked, it is necessary to create, also empty, `eccs-disabled.txt` file on IdP's web root.
+In cases where an IdP cannot be reliably checked, it is necessary to create or enrich the `robots.txt` file on the IdP's web root with:
+
+```bash
+User-agent: ECCS
+Disallow: /
+```
 
 # On-line interface
 
