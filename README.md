@@ -183,9 +183,9 @@ Note: Pay attetion on the chromedriver version:
   * `./runEccs2.py --test` (to run a full check without effects)
   * `./runEccs2.py --idp <IDP-ENTITYID> --test` (to run check on a single IdP without effects)
 
-  The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_YYYY-MM-DD.log` file.
+  The check will run a second time for those IdPs that failed the first execution of the script. If something prevent the good execution of the check, the `/opt/eccs2/output/failed-cmd.sh` file will be not empty.
 
-  The check will run a second time for those IdPs that fail on the first execution of the script. If something prevent the good execution of the check, the `/opt/eccs2/output/failed-cmd.sh` file will contain the command that failed 2 times.
+  The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_idp_YYYY-MM-DD.log`,`logs/stderr_idp_YYYY-MM-DD.log` and `output/failed-cmd-idp.sh` files.
 
 # ECCS2 API Development Server
 
