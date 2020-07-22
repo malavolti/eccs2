@@ -51,6 +51,36 @@ def checkIdP(sp,idp,test):
    fqdn_sp = parse_url(sp)[2]
    wayfless_url = sp + idp['entityID']
 
+   exclude_idp = ""   
+
+   try:
+      headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'}
+      exclude_idp = requests.get("https://%s/eccs-disabled.txt" % fqdn_idp, headers=headers, verify=False, timeout=30)   
+
+      if (exclude_idp == ""):
+         exclude_idp  = requests.get("http://%s/eccs-disabled.txt" % fqdn_idp, headers=headers, verify=False, timeout=30)
+
+   except requests.exceptions.ConnectionError as e:
+     print("!!! ECCS-DISABLED REQUESTS CONNECTION ERROR EXCEPTION !!!")
+     #print (e.__str__())
+     exclude_idp = ""
+
+   except requests.exceptions.Timeout as e:
+     print("!!! ECCS-DISABLED REQUESTS TIMEOUT EXCEPTION !!!")
+     #print (e.__str__())
+     exclude_idp = ""
+
+   if (exclude_idp):
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+
+      if (test is not True):
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+              html.write("IdP excluded from check by eccs-disabled.txt")
+      else:
+         print("IdP excluded from check by eccs-disabled.txt")
+
+      return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
+
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
