@@ -39,7 +39,7 @@ The tool uses following status for IdPs:
   * The IdP most likely does not consume the eduGAIN metadata correctly or it hasn't does not return a web page that looks like a login form. A typical case that falls into this category is when an IdP returns a message "No return endpoint available for relying party" or "No metadata found for relying party".
 * OK (green):
   * The IdP most likely correctly consumes eduGAIN metadata and returns a valid login page. This is no guarantee that login on this IdP works for all eduGAIN services but if the check is passed for an IdP, this is probable.
-* DISABLE (white)
+* DISABLED (white)
   * The IdP is excluded from checks because it cannot be checked reliably (see limitations below) affected by some problems that prevent them to consume correctly eduGAIN metadata. The "Page Source" column, when an entity is disabled, shows the reason of the disabling.
 
 
