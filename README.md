@@ -106,7 +106,6 @@ The tool uses following status for IdPs:
   * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
 * CentOS:
   * `sudo yum install mod_proxy_uwsgi unzip`
-  * `sudo getsebool -a | grep httpd`
   * Enable ECCS2 for SELinux:
     * `semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
     * `restorecon -R -a /opt/eccs2/`
