@@ -97,13 +97,13 @@ $(document).ready(function() {
         ],
         "rowCallback": function( row, data, index ) {
           if (data.status == "ERROR") {
-            $('td', row).css('background-color', 'Red');
+            $('td', row).css('background-color', '#EA4335');
           }
-          if (data.status == "DISABLE") {
-            $('td', row).css('background-color', 'Grey');
+          if (data.status == "DISABLED") {
+            $('td', row).css('background-color', '#FFFFFF');
           }
           if (data.status == "OK") {
-            $('td', row).css('background-color', 'Green');
+            $('td', row).css('background-color', '#34A853');
           }
         },
         "order": [[1, 'asc']]
