@@ -112,16 +112,16 @@ The tool uses following status for IdPs:
 ### Python 3.8
 
 1. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/:
-   * `wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
+   * `sudo wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
 
 2. Extract Python source package:
    * `cd /usr/local/src/`
-   * `tar xzf Python-3.8.3.tar.gz`
+   * `sudo tar xzf Python-3.8.3.tar.gz`
 
 3. Build Python from the source package:
    * `cd /usr/local/src/Python-3.8.3`
-   * `./configure --enable-optimizations`
-   * `make -j 4`
+   * `sudo ./configure --enable-optimizations`
+   * `sudo make -j 4`
 
 4. Install Python 3.8.x (without replacing the system `python3` command) under `/usr/local/bin/python3.8`:
    * `sudo make altinstall`
@@ -129,30 +129,6 @@ The tool uses following status for IdPs:
 
 5. Create link of Python3.8 for scripts:
    * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
-
-# Install requirements for uWSGI used by ECCS2 API
-
-* Debian:
-  * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
-* CentOS:
-  * `sudo yum install mod_proxy_uwsgi unzip`
-  * Enable ECCS2 for SELinux:
-    * `semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
-    * `restorecon -R -a /opt/eccs2/`
-
-# Install Selenium and Chromedriver
-
-* `python3.8 -m pip install --upgrade pip`
-* `python3.8 -m pip install selenium virtualenv uwsgi`
-* `sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip`
-* `cd /usr/bin/`
-* `sudo unzip /usr/local/src/chromedriver_linux64.zip`
-
-Note: Pay attetion on the chromedriver version:
-* Debian 9 (stretch):
-  * `chromium -version` => Chromium 73.0.3683.75 => https://chromedriver.storage.googleapis.com/73.0.3683.68/chromedriver_linux64.zip
-* CentOS 7.8:
-  * `chromium-browser -version` => Chromium 83.0.4103.116 => https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip
 
 # Install Chromium needed by Selenium
 
@@ -163,16 +139,31 @@ Note: Pay attetion on the chromedriver version:
   * `sudo yum install -y epel-release`
   * `sudo yum install -y chromium git jq`
 
+# Install Selenium and Chromedriver
+
+* `sudo python3.8 -m pip install --upgrade pip`
+* `sudo python3.8 -m pip install selenium virtualenv`
+* `sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip`
+* `cd /usr/bin/`
+* `sudo unzip /usr/local/src/chromedriver_linux64.zip`
+
+Note: Pay attetion on the chromedriver version:
+* Debian 9 (stretch):
+  * `chromium -version` => Chromium 73.0.3683.75 => https://chromedriver.storage.googleapis.com/73.0.3683.68/chromedriver_linux64.zip
+* CentOS 7.8:
+  * `chromium-browser -version` => Chromium 83.0.4103.116 => https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip
+
+
 # ECCS2
 
 ## Install
 
 * `cd /opt ; git clone https://github.com/malavolti/eccs2.git`
 * `cd eccs2`
-* `virtualenv -p python38 eccs2venv`
+* `virtualenv --python=/usr/bin/python3.8 eccs2venv`
 * `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
-  * `pip install --upgrade pip`
-  * `pip install -r requirements.txt`
+  * `python3.8 -m pip install --upgrade pip uwsgi`
+  * `python3.8 -m pip install -r requirements.txt`
 
 ## Configure
 
@@ -216,6 +207,16 @@ Note: Pay attetion on the chromedriver version:
   If something prevent the good execution of the ECCS2's check, the `/opt/eccs2/logs/failed-cmd.sh` file will be not empty at the end of the execution.
 
   The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_idp_YYYY-MM-DD.log`,`logs/stderr_idp_YYYY-MM-DD.log` and `logs/failed-cmd-idp.sh` files.
+
+# Install requirements for uWSGI used by ECCS2 API
+
+* Debian:
+  * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
+* CentOS:
+  * `sudo yum install mod_proxy_uwsgi unzip`
+  * Enable ECCS2 for SELinux:
+    * `sudo semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
+    * `sudo restorecon -R -e /opt/eccs2/`
 
 # ECCS2 API Development Server
 
