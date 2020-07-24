@@ -5,8 +5,9 @@ import datetime
 import json
 import re
 import requests
+import sys
 
-from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG,ROBOTS_USER_AGENT
+from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG,ROBOTS_USER_AGENT,ECCS2REQUESTSTIMEOUT
 from pathlib import Path
 from selenium.common.exceptions import TimeoutException
 from urllib3.util import parse_url
@@ -20,33 +21,26 @@ If the IdP Login page presente the fields for both selected SP the test is passe
 """
 
 # Returns the FQDN to use on the HTML page_source files
-def getIDPfqdn(entityIDidp):
-    if entityIDidp.startswith('http'):
-       return parse_url(entityIDidp)[2]
+def getIDPlabel(url_or_urn):
+    if url_or_urn.startswith('http'):
+       return parse_url(url_or_urn)[2]
     else:
-       return entityIDidp.split(":")[-1] 
+       return url_or_urn.split(":")[-1] 
 
-# Return True if the ECCS check MUST not be run
-def checkRobots(url_robots_txt):
-    robots_txt = requests.get(url_robots_txt)
-    p = re.compile('^User-agent:\sECCS\sDisallow:\s\/\s*$', re.MULTILINE)
-    m = p.search(robots_txt.text)
-    if (m):
-       return True
-    else:
-       return False
+def getIDPfqdn(samlrequest_url):
+    return getIDPlabel(samlrequest_url)
 
 # The function check that the IdP recognized the SP by presenting its Login page.
 # If the IdP Login page contains "username" and "password" fields, than the test is passed.
 def checkIdP(sp,idp,test):
-   # Chromedriver MUST be instanced here to avoid problems with SESSION
 
    # Disable SSL requests warning messages
    requests.packages.urllib3.disable_warnings()
 
    debug_selenium = ECCS2SELENIUMDEBUG
-   fqdn_idp = parse_url(idp['entityID'])[2]
-   driver = getDriver(fqdn_idp,debug_selenium)
+   label_idp = getIDPlabel(idp['entityID'])
+   # WebDriver MUST be instanced here to avoid problems with SESSION
+   driver = getDriver(label_idp,debug_selenium)
 
    # Exception of WebDriver raises
    if (driver == None):
@@ -56,53 +50,16 @@ def checkIdP(sp,idp,test):
    federation_blacklist = FEDS_BLACKLIST
    entities_blacklist = IDPS_BLACKLIST 
 
-   fqdn_idp = getIDPfqdn(idp['entityID'])
    fqdn_sp = parse_url(sp)[2]
    wayfless_url = sp + idp['entityID']
 
    robots = ""
 
-   try:
-      headers = {
-         'User-Agent': '%s' % ROBOTS_USER_AGENT
-      }
-
-      robots = requests.get("https://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=30)
-
-      if (robots == ""):
-         robots  = requests.get("http://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=30)
-
-   except (requests.exceptions.ConnectionError,requests.exceptions.Timeout,requests.exceptions.SSLError) as e:
-      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-
-      if (test is not True):
-         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-             html.write("IdP excluded from check because the download of 'robots.txt' failed: %s" % e.__str__())
-      else:
-         print("IdP excluded from check because the download of 'robots.txt' failed: %s" % e.__str__())
-
-      return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
-
-   if (robots):
-      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
-
-      p = re.compile('^User-agent:\sECCS\sDisallow:\s\/\s*$', re.MULTILINE)
-      m = p.search(robots.text)
-
-      if (m):
-         if (test is not True):
-            with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
-                 html.write("IdP excluded from check by robots.txt")
-         else:
-            print("IdP excluded from check by robots.txt")
-
-         return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
-
    if (idp['registrationAuthority'] in federation_blacklist):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
       if (test is not True):
-         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
               html.write("Federation excluded from check")
       else:
          print("Federation excluded from check")
@@ -113,7 +70,7 @@ def checkIdP(sp,idp,test):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
       if (test is not True):
-         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
               html.write("Identity Provider excluded from check")
       else:
          print("Identity Provider excluded from check")
@@ -129,18 +86,18 @@ def checkIdP(sp,idp,test):
 
       if (test is not True):
          # Put the page_source into an appropriate HTML file
-         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
               html.write(page_source)
       else:
-         print("\n[page_source of '%s' for sp '%s']\n%s" % (fqdn_idp,fqdn_sp,page_source))
+         print("\n[page_source of '%s' for sp '%s']\n%s" % (label_idp,fqdn_sp,page_source))
 
    except TimeoutException as e:
      if (test is not True):
         # Put an empty string into the page_source file
-        with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,fqdn_idp,fqdn_sp),"w") as html:
+        with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
              html.write("")
      else:
-        print("\n[page_source of '%s' for sp '%s']\nNo source code" % (fqdn_idp,fqdn_sp))
+        print("\n[page_source of '%s' for sp '%s']\nNo source code" % (label_idp,fqdn_sp))
      return (idp['entityID'],wayfless_url,check_time,"(failed)","Timeout")
 
    except Exception as e:
@@ -151,6 +108,52 @@ def checkIdP(sp,idp,test):
 
    finally:
      driver.quit()
+
+   try:
+      headers = {
+         'User-Agent': '%s' % ROBOTS_USER_AGENT
+      }
+
+      fqdn_idp = getIDPfqdn(samlrequest_url)
+
+      robots = requests.get("https://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=ECCS2REQUESTSTIMEOUT)
+
+      if (robots == ""):
+         robots  = requests.get("http://%s/robots.txt" % fqdn_idp, headers=headers, verify=True, timeout=ECCS2REQUESTSTIMEOUT)
+
+   # Catch only SSL Exception. Don't block the ECCS check if other exceptions occurred
+   except (requests.exceptions.SSLError) as e:
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+
+      if (test is not True):
+         with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
+             html.write("<p>IdP excluded from check due the following SSL Error:<br/><br/>%s</p><p>Check it on SSL Labs: <a href='https://www.ssllabs.com/ssltest/analyze.html?d=%s'>Click Here</a></p>" % (e.__str__(),fqdn_idp))
+      else:
+          print("IdP excluded from check due the following SSL Error:\n\n%s\n\nCheck it on SSL Labs: https://www.ssllabs.com/ssltest/analyze.html?d=%s" % (e.__str__(),fqdn_idp))
+
+      return (idp['entityID'],wayfless_url,check_time,"(failed)","SSL-Error")
+
+   # Pass every other exceptions on /robots.txt file. We consider only SSLError.
+   #except (requests.exceptions.ConnectionError,requests.exceptions.TooManyRedirects,requests.exceptions.Timeout,requests.exceptions.RetryError) as e:
+   except Exception as e:
+      #print("IdP '%s' HAD HAD A REQUEST ERROR: %s" % (fqdn_idp,e.__str__()))
+      robots = ""
+
+   if (robots):
+      check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+
+      p = re.compile('^User-agent:\sECCS\sDisallow:\s\/\s*$', re.MULTILINE)
+      m = p.search(robots.text)
+
+      if (m):
+         if (test is not True):
+            with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
+                 html.write("IdP excluded from check by robots.txt")
+         else:
+            print("IdP excluded from check by robots.txt")
+
+         return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
+
 
    pattern_metadata = "Unable.to.locate(\sissuer.in|).metadata(\sfor|)|no.metadata.found|profile.is.not.configured.for.relying.party|Cannot.locate.entity|fail.to.load.unknown.provider|does.not.recognise.the.service|unable.to.load.provider|Nous.n'avons.pas.pu.(charg|charger).le.fournisseur.de service|Metadata.not.found|application.you.have.accessed.is.not.registered.for.use.with.this.service|Message.did.not.meet.security.requirements"
 
@@ -163,7 +166,7 @@ def checkIdP(sp,idp,test):
 
    try:
       headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'}
-      status_code = str(requests.get(samlrequest_url, headers=headers, verify=False, timeout=30).status_code)
+      status_code = str(requests.get(samlrequest_url, headers=headers, verify=False, timeout=ECCS2REQUESTSTIMEOUT).status_code)
 
    except requests.exceptions.ConnectionError as e:
      #print("!!! REQUESTS STATUS CODE CONNECTION ERROR EXCEPTION !!!")
