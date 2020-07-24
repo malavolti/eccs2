@@ -7,7 +7,7 @@ import re
 import requests
 import sys
 
-from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, FEDS_BLACKLIST, IDPS_BLACKLIST, ECCS2SPS, ECCS2SELENIUMDEBUG,ROBOTS_USER_AGENT,ECCS2REQUESTSTIMEOUT
+from eccs2properties import DAY, ECCS2HTMLDIR, ECCS2OUTPUTDIR, ECCS2RESULTSLOG, ECCS2SPS, ECCS2SELENIUMDEBUG,ROBOTS_USER_AGENT,ECCS2REQUESTSTIMEOUT, FEDS_DISABLED_DICT, IDPS_DISABLED_DICT
 from pathlib import Path
 from selenium.common.exceptions import TimeoutException
 from urllib3.util import parse_url
@@ -15,9 +15,8 @@ from utils import getLogger, getIdPContacts, getDriver
 
 
 """
-The script works with 2 SPs that using Shibboleth Embedded Discovery Service to allow IdP selection on their login page.
-The script has been written to simulate an user that inserts the IdP's entityID into the EDS search box and press "Enter" to load its Login Page. The Login Page MUST presents the fields "username" and "password" to pass the check on each SP involved into the test.
-If the IdP Login page presente the fields for both selected SP the test is passed, otherwise it is failed.
+The check works with the wayfless url of two SP and successed if the IdP Login Page appears and contains the fields "username" and "password" for each of them.
+It is possible to disable the check by eccs2properties with *denylist or by "robots.txt" put on the SAMLRequest endpoint root web dir.
 """
 
 # Returns the FQDN to use on the HTML page_source files
@@ -30,7 +29,8 @@ def getIDPlabel(url_or_urn):
 def getIDPfqdn(samlrequest_url):
     return getIDPlabel(samlrequest_url)
 
-# The function check that the IdP recognized the SP by presenting its Login page.
+# This function checks if an IdP recognized the SP by presenting its Login page with "username" and "password" fields.
+# It is possible to disable the check on eccs2properties with the *denylist or by "robots.txt" file into the SAMLRequest endpoint root web dir.
 # If the IdP Login page contains "username" and "password" fields, than the test is passed.
 def checkIdP(sp,idp,test):
 
@@ -47,33 +47,35 @@ def checkIdP(sp,idp,test):
       return None
 
    # Configure Blacklists
-   federation_blacklist = FEDS_BLACKLIST
-   entities_blacklist = IDPS_BLACKLIST 
+   #federations_disabled_list = FEDS_DISABLED_LIST
+   #idps_disabled_list = IDPS_DISABLED_LIST
+   federations_disabled_dict = FEDS_DISABLED_DICT
+   idps_disabled_dict = IDPS_DISABLED_DICT
 
    fqdn_sp = parse_url(sp)[2]
    wayfless_url = sp + idp['entityID']
 
    robots = ""
 
-   if (idp['registrationAuthority'] in federation_blacklist):
+   if (idp['registrationAuthority'] in federations_disabled_dict.keys()):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
       if (test is not True):
          with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
-              html.write("Federation excluded from check")
+              html.write("%s" % federations_disabled_dict[idp['registrationAuthority']])
       else:
-         print("Federation excluded from check")
+         print("%s" % federations_disabled_dict[idp['registrationAuthority']])
 
       return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
-   if (idp['entityID'] in entities_blacklist):
+   if (idp['entityID'] in idps_disabled_dict.keys()):
       check_time = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
 
       if (test is not True):
          with open("%s/%s/%s---%s.html" % (ECCS2HTMLDIR,DAY,label_idp,fqdn_sp),"w") as html:
-              html.write("Identity Provider excluded from check")
+              html.write("%s" % idps_disabled_dict[idp['entityID']])
       else:
-         print("Identity Provider excluded from check")
+         print("%s" % idps_disabled_dict[idp['entityID']])
 
       return (idp['entityID'],wayfless_url,check_time,"NULL","DISABLED")
 
@@ -133,8 +135,7 @@ def checkIdP(sp,idp,test):
 
       return (idp['entityID'],wayfless_url,check_time,"(failed)","SSL-Error")
 
-   # Pass every other exceptions on /robots.txt file. We consider only SSLError.
-   #except (requests.exceptions.ConnectionError,requests.exceptions.TooManyRedirects,requests.exceptions.Timeout,requests.exceptions.RetryError) as e:
+   # Pass every other exceptions on /robots.txt file. I consider only SSLError.
    except Exception as e:
       #print("IdP '%s' HAD HAD A REQUEST ERROR: %s" % (fqdn_idp,e.__str__()))
       robots = ""
@@ -169,33 +170,33 @@ def checkIdP(sp,idp,test):
       status_code = str(requests.get(samlrequest_url, headers=headers, verify=False, timeout=ECCS2REQUESTSTIMEOUT).status_code)
 
    except requests.exceptions.ConnectionError as e:
+     print ("status-code: (failed) - ConnectionError for IdP '%s' with SP '%s'" % (idp['entityID'],sp))
      #print("!!! REQUESTS STATUS CODE CONNECTION ERROR EXCEPTION !!!")
      #print (e.__str__())
-     #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "(failed)"
 
    except requests.exceptions.Timeout as e:
+     print ("status-code: 111 - TimeoutError for IdP '%s' with SP '%s'" % (idp['entityID'],sp))
      #print("!!! REQUESTS STATUS CODE TIMEOUT EXCEPTION !!!")
      #print (e.__str__())
-     #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "111"
 
    except requests.exceptions.TooManyRedirects as e:
+     print ("status-code: 222 - TooManyRedirectsError for IdP '%s' with SP '%s'" % (idp['entityID'],sp))
      #print("!!! REQUESTS TOO MANY REDIRECTS EXCEPTION !!!")
      #print (e.__str__())
-     #print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "222"
 
    except requests.exceptions.RequestException as e:
-     print ("!!! REQUESTS EXCEPTION !!!")
+     print ("status-code: 333 - RequestException for IdP '%s' with SP '%s'" % (idp['entityID'],sp))
+     #print ("!!! REQUESTS EXCEPTION !!!")
      print (e.__str__())
-     print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "333"
 
    except Exception as e:
-     print ("!!! EXCEPTION REQUESTS !!!")
+     print ("status-code: 555 - OtherException for IdP '%s' with SP '%s'" % (idp['entityID'],sp))
+     #print ("!!! EXCEPTION REQUESTS !!!")
      print (e.__str__())
-     print ("IdP: %s\nSP: %s" % (idp['entityID'],sp))
      status_code = "555"
 
    if(metadata_not_found):

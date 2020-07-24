@@ -43,33 +43,33 @@ ECCS2SPS = ["https://sp24-test.garr.it/Shibboleth.sso/Login?entityID=", "https:/
 # ROBOTS.TXT
 ROBOTS_USER_AGENT = "ECCS/2.0 (+https://dev-mm.aai-test.garr.it/eccs2)"
 
-# Registration Authority of Federations to exclude from the check
-FEDS_BLACKLIST = [
-   'http://www.surfconext.nl/',
-   'https://www.wayf.dk',
-   'http://feide.no/'
-]
+# { 'reg_auth':'reason' }
+FEDS_DISABLED_DICT = {
+   'http://www.surfconext.nl/':'Federation excluded from check',
+   'https://www.wayf.dk':'Federation excluded from check',
+   'http://feide.no/':'Federation excluded from check'
+}
 
-# EntityID of IDPs to exclude from the check
-IDPS_BLACKLIST = [
-   'https://idp.eie.gr/idp/shibboleth',
-   'https://edugain-proxy.igtf.net/simplesaml/saml2/idp/metadata.php',
-   'https://gn-vho.grnet.gr/idp/shibboleth',
-   'https://wtc.tu-chemnitz.de/shibboleth',
-   'https://idp.utorauth.utoronto.ca/shibboleth',
-   'https://login.lstonline.ac.uk/idp/pingfederate',
-   'https://idp.cambria.ac.uk/openathens',
-   'https://indiid.net/idp/shibboleth',
-   'https://idp.nulc.ac.uk/openathens',
-   'https://lc-idp.lincolncollege.ac.uk/shibboleth',
-   'https://boleth.chi.ac.uk/idp/shibboleth',
-   'https://idp.wnsc.ac.uk/idp/shibboleth',
-   'https://idp.strodes.ac.uk/shibboleth',
-   'https://idp.ucreative.ac.uk/shibboleth',
-   'https://idp.llandrillo.ac.uk/shibboleth',
-   'https://idp.uel.ac.uk/shibboleth',
-   'https://idp-dev.cardiff.ac.uk/idp/shibboleth',
-   'https://sso.vu.lt/SSO/saml2/idp/metadata.php',
-   #'https://ssl.education.lu/saml/saml2/idp/metadata.php',
-   'https://iif.iucc.ac.il/idp/saml2/idp/metadata.php'
-]
+# { 'entityid_idp':'reason' }
+IDPS_DISABLED_DICT = {
+   'https://idp.eie.gr/idp/shibboleth':'Disabled on 2019-04-24 because ECCS cannot check non-standard login page',
+#   'https://edugain-proxy.igtf.net/simplesaml/saml2/idp/metadata.php':'Disabled on 2017-03-17 on request of federation operator',
+   'https://gn-vho.grnet.gr/idp/shibboleth':'Disabled on 2019-04-24 because basic authentication is not supported by ECCS check',
+   'https://wtc.tu-chemnitz.de/shibboleth':'Disabled on 2019-02-26 because ECCS cannot check non-standard login page',
+#   'https://idp.utorauth.utoronto.ca/shibboleth':'Disabled on 2015-08-17 because login on this IdP requires JavaScript, which is not supported by the check',
+   'https://login.lstonline.ac.uk/idp/pingfederate':'Disabled on 2017-02-08 on request of federation operator',
+   'https://idp.cambria.ac.uk/openathens':'Disabled on 2017-10-27 on request of federation operator',
+   'https://indiid.net/idp/shibboleth':'Disabled on 2017-10-27 on request of federation operator',
+   'https://idp.nulc.ac.uk/openathens':'Disabled on 2017-10-27 on request of federation operator',
+#   'https://lc-idp.lincolncollege.ac.uk/shibboleth':'Disabled on 2015-08-17 because uses HTTP Basic authentication, which cannot be checked reliably',
+#   'https://boleth.chi.ac.uk/idp/shibboleth':'Disabled on 2015-08-17 because uses HTTP Basic authentication, which cannot be checked reliably',
+   'https://idp.wnsc.ac.uk/idp/shibboleth':'Disabled on 2017-10-27 on request of federation operator',
+#   'https://idp.strodes.ac.uk/shibboleth':'Disabled on 2015-08-17 because uses HTTP Basic authentication, which cannot be checked reliably',
+   'https://idp.ucreative.ac.uk/shibboleth':'Disabled on 2017-10-27 on request of federation operator',
+   'https://idp.llandrillo.ac.uk/shibboleth':'Disabled on 2017-10-27 on request of federation operator',
+   'https://idp.uel.ac.uk/shibboleth':'Disabled on 2017-10-27 on request of federation operator',
+   'https://idp-dev.cardiff.ac.uk/idp/shibboleth':'Disabled on 2017-02-08 on request of federation operator',
+   'https://sso.vu.lt/SSO/saml2/idp/metadata.php':'Disabled on 2018-11-02 because ECCS cannot check non-standard login page',
+   #'https://ssl.education.lu/saml/saml2/idp/metadata.php':'Disabled on 2018-11-06 ECCS cannot check non-standard login page',
+   'https://iif.iucc.ac.il/idp/saml2/idp/metadata.php':'Disabled on 2018-11-06 ECCS cannot check non-standard login page'
+}
