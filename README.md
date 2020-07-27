@@ -12,7 +12,7 @@
      + [CentOS 7 requirements](#centos-7-requirements)
      + [Debian requirements](#debian-requirements)
      + [Python 3.8](#python-38)
-9. [Install Selenium and Chromedriver](#install-selenium-and-chromedriver)
+9. [Install the Chromedriver](#install-the-chromedriver)
 10. [Install Chromium needed by Selenium](#install-chromium-needed-by-selenium)
 11. [ECCS2 Script](#eccs2-script)
     * [Install](#install)
@@ -148,11 +148,9 @@ The tool uses following status for IdPs:
   * `sudo yum install -y epel-release`
   * `sudo yum install -y chromium git jq`
 
-# Install Selenium and Chromedriver
+# Install the Chromedriver
 
-* `cd $HOME/eccs2/python/bin
-* `./python3.8 -m pip install --upgrade pip`
-* `./python3.8 -m pip install selenium`
+* `cd $HOME/eccs2/python/bin`
 * `wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O $HOME/eccs2/chromedriver_linux64.zip`
 * `cd $HOME/eccs2`
 * `unzip chromedriver_linux64.zip`
