@@ -2,3 +2,7 @@
 *.pyc
 *eccs2venv*
 eccs2.pid
+chromedriver
+python*
+eccs2.ini
+eccs2.service

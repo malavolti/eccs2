@@ -2,21 +2,23 @@
 
 # logs/stderr_$date.log is kept to see which IdP had been errors
 
+BASEDIR=$HOME
+
 # Remove old IdP and Fed List
-rm -f /opt/eccs2/input/*.json
+rm -f $BASEDIR/eccs2/input/*.json
 
 # Run ECCS2
-/opt/eccs2/runEccs2.py
+$BASEDIR/eccs2/runEccs2.py
 
 # Run Failed Command again
-bash /opt/eccs2/logs/failed-cmd.sh
+bash $BASEDIR/eccs2/logs/failed-cmd.sh
 
 # Remove "failed-cmd" and "stdout*" "stderr*" if empty
 date=$(date '+%Y-%m-%d')
-file="/opt/eccs2/logs/failed-cmd.sh"
-prefix="/opt/eccs2/eccs2.py '"
+file="$BASEDIR/eccs2/logs/failed-cmd.sh"
+prefix="$BASEDIR/eccs2/eccs2.py '"
 suffix="'"
-eccs2output="/opt/eccs2/output/eccs2_$date.log"
+eccs2output="$BASEDIR/eccs2/output/eccs2_$date.log"
 declare -a eccs2cmdToRemoveArray
 
 while IFS= read -r line

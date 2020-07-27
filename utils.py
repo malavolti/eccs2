@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 
 import json
 import logging
@@ -6,7 +6,7 @@ import pathlib
 import requests
 import sys
 
-from eccs2properties import ECCS2SELENIUMLOGDIR, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT
+from eccs2properties import ECCS2SELENIUMLOGDIR, ECCS2SELENIUMPAGELOADTIMEOUT, ECCS2SELENIUMSCRIPTTIMEOUT, PATHCHROMEDRIVER
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 
@@ -127,9 +127,9 @@ def getDriver(fqdn_idp=None,debugSelenium=False):
     # When debugging issues, it is helpful to enable more verbose logging.)
     try:
        if (debugSelenium and fqdn_idp):
-          driver = webdriver.Chrome('chromedriver', options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, fqdn_idp)])
+          driver = webdriver.Chrome(PATHCHROMEDRIVER, options=chrome_options,  service_args=['--verbose', '--log-path=%s/%s.log' % (ECCS2SELENIUMLOGDIR, fqdn_idp)])
        else:
-          driver = webdriver.Chrome('chromedriver', options=chrome_options)
+          driver = webdriver.Chrome(PATHCHROMEDRIVER, options=chrome_options)
     except WebDriverException as e:
        sys.stderr.write("!!! WEB DRIVER EXCEPTION - RUN AGAIN THE COMMAND!!!")
        sys.stderr.write(e.__str__())

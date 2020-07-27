@@ -1,0 +1,19 @@
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=uWSGI server for ECCS2
+After=network.target
+
+[Service]
+User=<USER>
+Group=<USER>
+WorkingDirectory=/home/<USER>/eccs2
+RuntimeDirectory=/home/<USER>/eccs2
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+#Environment="PATH=/home/<USER>/eccs2/eccs2venv/bin"
+ExecStart=/home/<USER>/eccs2/eccs2venv/bin/uwsgi --ini /home/<USER>/eccs2/eccs2.ini

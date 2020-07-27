@@ -14,15 +14,15 @@
      + [Python 3.8](#python-38)
 9. [Install Selenium and Chromedriver](#install-selenium-and-chromedriver)
 10. [Install Chromium needed by Selenium](#install-chromium-needed-by-selenium)
-11. [ECCS2](#eccs2)
+11. [ECCS2 Script](#eccs2-script)
     * [Install](#install)
     * [Configure](#configure)
-    * [Execute](#execute)
-12. [Install requirements for uWSGI used by ECCS2 API](#install-requirements-for-uwsgi-used-by-eccs2-api)    
-13. [ECCS2 API Development Server](#eccs2-api-development-server)
-14. [ECCS2 API JSON](#eccs2-api-json)
-15. [Utility for web interface](#utility-for-web-interface)
-16. [Authors](#authors)
+    * [Execute](#execute)    
+12. [ECCS2 API JSON](#eccs2-api-json)
+13. [Utility for web interface](#utility-for-web-interface)
+14. [Utility for developers](#utility-for-developers)
+    * [ECCS2 API Development Server](#eccs2-api-development-server)
+15. [Authors](#authors)
 
 # Introduction
 
@@ -78,15 +78,19 @@ The tool uses following status for IdPs:
 * OS: Debian 9, CentOS 7.8 (tested)
 * HDD: 10 GB
 * RAM: 4 GB
-* CPU: >= 2 vCPU
+* CPU: >= 2 vCPU (suggested)
 
 # Requirements Software
 
 * Apache Server + WSGI
-* Python 3.8 (tested with v3.8.3)
+* Python 3.8 (tested with v3.8.3,v3.8.5)
 * Selenim + Chromium Web Brower
 
 # HOWTO Install and Configure
+
+## Download ECCS2 Repository
+
+* `cd $HOME ; git clone https://github.com/malavolti/eccs2.git`
 
 ## Install Python 3.8.x
 
@@ -111,24 +115,26 @@ The tool uses following status for IdPs:
 
 ### Python 3.8
 
-1. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/:
-   * `sudo wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz -O /usr/local/src/Python-3.8.3.tar.gz`
+1. Download the last version of Python 3.8.x from https://www.python.org/downloads/source/ into your home:
+   * `wget https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz -O $HOME/eccs2/Python-3.8.5.tgz`
 
 2. Extract Python source package:
-   * `cd /usr/local/src/`
-   * `sudo tar xzf Python-3.8.3.tar.gz`
+   * `cd $HOME/eccs2/`
+   * `tar xzf Python-3.8.5.tgz`
 
 3. Build Python from the source package:
-   * `cd /usr/local/src/Python-3.8.3`
-   * `sudo ./configure --enable-optimizations`
-   * `sudo make -j 4`
+   * `cd $HOME/eccs2/Python-3.8.5`
+   * `./configure --prefix=$HOME/eccs2/python`
+   * `make`
 
-4. Install Python 3.8.x (without replacing the system `python3` command) under `/usr/local/bin/python3.8`:
-   * `sudo make altinstall`
-   * `python3.8 --version`
-
-5. Create link of Python3.8 for scripts:
-   * `sudo ln -s /usr/local/bin/python3.8 /usr/bin/python3.8`
+4. Install Python 3.8.x under `$HOME/eccs2/python`:
+   * `make install`
+   * `$HOME/eccs2/python/bin/python3.8 --version`
+ 
+   This will install python under your $HOME directory.
+   
+5. Remove useless things:
+   * `rm -Rf $HOME/eccs2/Python-3.8.5 $HOME/eccs2/Python-3.8.5.tgz`
 
 # Install Chromium needed by Selenium
 
@@ -141,11 +147,13 @@ The tool uses following status for IdPs:
 
 # Install Selenium and Chromedriver
 
-* `sudo python3.8 -m pip install --upgrade pip`
-* `sudo python3.8 -m pip install selenium virtualenv`
-* `sudo wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O /usr/local/src/chromedriver_linux64.zip`
-* `cd /usr/bin/`
-* `sudo unzip /usr/local/src/chromedriver_linux64.zip`
+* `cd $HOME/eccs2/python/bin
+* `./python3.8 -m pip install --upgrade pip`
+* `./python3.8 -m pip install selenium`
+* `wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O $HOME/eccs2/chromedriver_linux64.zip`
+* `cd $HOME/eccs2`
+* `unzip chromedriver_linux64.zip`
+* `rm chromedriver_linux64.zip`
 
 Note: Pay attetion on the chromedriver version:
 * Debian 9 (stretch):
@@ -153,50 +161,34 @@ Note: Pay attetion on the chromedriver version:
 * CentOS 7.8:
   * `chromium-browser -version` => Chromium 83.0.4103.116 => https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip
 
-
-# ECCS2
+# ECCS2 Script
 
 ## Install
 
-* `cd /opt ; git clone https://github.com/malavolti/eccs2.git`
-* `cd eccs2`
-* `virtualenv --python=/usr/bin/python3.8 eccs2venv`
+* `cd $HOME/eccs2`
+* `./python/bin/python3.8 -m pip install virtualenv`
+* `$HOME/eccs2/python/bin/virtualenv --python=$HOME/eccs2/python/bin/python3.8 eccs2venv`
 * `source eccs2venv/bin/activate`   (`deactivate` to exit Virtualenv)
-  * `python3.8 -m pip install --upgrade pip uwsgi`
-  * `python3.8 -m pip install -r requirements.txt`
+  * `python -m pip install -r requirements.txt`
 
 ## Configure
 
 1. Configure ECCS2 properties:
    * `vim eccs2properties.py` (and change it upon your needs)
 
-2. Configure ECCS2 cron job for your local user (`debian` into this example):
-   * `sudo crontab -u debian -e` (Debian) or `sudo crontab -u centos -e` (CentOS)
+2. Add to `PATH` the virtualenv Python `bin` dir:
+   * `export PATH=${HOME}/eccs2/eccs2venv/bin:${PATH}`
+   
+3. Configure ECCS2 cron job for the local user:
+   * `crontab -e`
 
      ```bash
-     0 4 * * * /bin/bash /opt/eccs2/cleanAndRunEccs2.sh > /opt/eccs2/logs/eccs2cron.log 2>&1  
+     0 4 * * * /bin/bash $HOME/eccs2/cleanAndRunEccs2.sh > $HOME/eccs2/logs/eccs2cron.log 2>&1  
      ```
-
-3. Configure the ECCS2 systemd service to enable its API:
-   * `vim /opt/eccs2/eccs2.ini` (and change the "`User`" and the "`Group`" values)
-   * `vim /opt/eccs2/eccs2.service` (and change the "`User`" and the "`Group`" values)
-   * `sudo cp /opt/eccs2/eccs2.service /etc/systemd/system/eccs2.service`
-   * `sudo systemctl daemon-reload`
-   * `sudo systemctl enable eccs2.service`
-   * `sudo systemctl start eccs2.service`
-
-4. Configure Apache for the ECCS2 Web side:
-   * Debian:
-     * `sudo cp /opt/eccs2/eccs2-debian.conf /etc/apache2/conf-available/eccs2.conf`
-     * `sudo a2enconf eccs2.conf`
-     * `sudo systemctl restart apache2.service`
-   * CentOS:
-     * `sudo cp /opt/eccs2/eccs2-centos.conf /etc/httpd/conf.d/eccs2.conf`
-     * `sudo systemctl restart httpd.service`
 
 ## Execute
 
-  * `cd /opt/eccs2`
+  * `cd $HOME/eccs2`
   * `./cleanAndRunEccs2.py` (to run a full and clean check)
   * `./runEccs2.py` (to run a full check on the existing inputs)
   * `./runEccs2.py --idp <IDP-ENTITYID>` (to run check on a single IdP)
@@ -204,28 +196,49 @@ Note: Pay attetion on the chromedriver version:
   * `./runEccs2.py --idp <IDP-ENTITYID> --test` (to run check on a single IdP without effects)
 
   The check will run a second time for those IdPs that failed the first execution of the script.
-  If something prevent the good execution of the ECCS2's check, the `/opt/eccs2/logs/failed-cmd.sh` file will be not empty at the end of the execution.
+  If something prevent the good execution of the ECCS2's check, the `logs/failed-cmd.sh` file will be not empty at the end of the execution.
 
   The "--test" parameter will not change the result of ECCS2, but will write the output on the `logs/stdout_idp_YYYY-MM-DD.log`,`logs/stderr_idp_YYYY-MM-DD.log` and `logs/failed-cmd-idp.sh` files.
 
-# Install requirements for uWSGI used by ECCS2 API
+# ECCS2 API Server (uWSGI)
 
-* Debian:
-  * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
-* CentOS:
-  * `sudo yum install mod_proxy_uwsgi unzip`
-  * Enable ECCS2 for SELinux:
-    * `sudo semanage fcontext -a -t httpd_sys_content_t "/opt/eccs2(/.*)?"`
-    * `sudo restorecon -R -e /opt/eccs2/`
+## Install
 
-# ECCS2 API Development Server
+1. Install requirements:
+   * Debian:
+     * `sudo apt-get install libpcre3 libpcre3-dev libapache2-mod-proxy-uwsgi build-essentials python3-dev unzip`
+   * CentOS:
+     * `sudo yum install mod_proxy_uwsgi unzip`
+     * Configure SElinux to enable ECCS2:
+       * `sudo semanage fcontext -a -t httpd_sys_content_t "$HOME/eccs2(/.*)?"`
+       * `sudo restorecon -R -e $HOME/eccs2/`
+       * `sudo setsebool -P httpd_can_network_connect 1`
+ 
+2. Add the systemd service to enable ECCS2 API:
+   * `cd $HOME/eccs2`
+   * `cp eccs2.ini.template eccs2.ini
+   * `cp eccs2.service.template eccs2.service
+   * `vim eccs2.ini` (and change "`uid`", "`gid`" and "`base`" values opportunely)
+   * `vim eccs2.service` (and change "`User`","`Group`","`WorkingDirectory`","`RuntimeDirectory`","`ExecStart`" values opportunely)
+   * `sudo cp $HOME/eccs2/eccs2.service /etc/systemd/system/eccs2.service`
+   * `sudo systemctl daemon-reload`
+   * `sudo systemctl enable eccs2.service`
+   * `sudo systemctl start eccs2.service`
 
-* `cd /opt/eccs2 ; ./api.py`
+3. Configure Apache for ECCS2 web side:
+   * Debian:
+     * `sudo cp $HOME/eccs2/eccs2-debian.conf /etc/apache2/conf-available/eccs2.conf`
+     * `sudo a2enconf eccs2.conf`
+     * `sudo chgrp www-data $HOME ; sudo chmod g+rx $HOME` (Apache needs permission to access the $HOME dir)
+     * `sudo systemctl restart apache2.service`
+   * CentOS:
+     * `sudo cp $HOME/eccs2/eccs2-centos.conf /etc/httpd/conf.d/eccs2.conf`
+     * `sudo chgrp apache $HOME ; sudo apache g+rx $HOME` (Apache needs permission to access the $HOME dir)
+     * `sudo systemctl restart httpd.service`
 
 # ECCS2 API JSON
 
-* `/api/test` (Trivial Test)
-* `/api/eccsresults` (Return the results of the last check ready for ECCS Gui)
+* `/api/eccsresults` (Return the results of the last check ready for ECCS web interface)
 * `/api/eccsresults?<parameter1>=<value1>&<parameter2>=<value2>`:
   * `date=2020-02-20` (select date)
   * `idp=https://idp.example.org/idp/shibboleth` (select a specific idp)
@@ -237,14 +250,19 @@ Note: Pay attetion on the chromedriver version:
 * `/api/fedstats`
 * `/api/fedstats?reg_auth=https://reg.auth.example.org`:
 
-
 # Utility for web interface
 
 The available dates are provided by the first and the last file created into the `output/` directory
 
-To clean the ECCS2 results from files older than last 7 days use:
+To clean the ECCS2 results from files older than last 7 days use (modify it on your needs):
 
 * `clean7daysOldFiles.sh`
+
+# Utility for developers
+
+## ECCS2 API Development Server
+
+* `cd $HOME/eccs2 ; ./api.py`
 
 # Authors
 

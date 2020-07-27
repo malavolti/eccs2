@@ -1,10 +1,10 @@
-#!/usr/bin/env python3.8
-
 from datetime import date
 
 DAY = date.today().isoformat()
 
-ECCS2DIR = "/opt/eccs2"
+ECCS2DIR = "/home/marco/eccs2"
+PATHCHROMEDRIVER = "/home/marco/eccs2/chromedriver"
+ECCS2PYTHON = "/home/marco/eccs2/python/bin/python3"
 
 # Input
 ECCS2INPUTDIR = "%s/input" % ECCS2DIR
@@ -35,7 +35,7 @@ ECCS2STDERRIDP = "%s/stderr_idp_%s.log" % (ECCS2LOGSDIR,DAY)
 ECCS2FAILEDCMDIDP = "%s/failed-cmd-idp.sh" % ECCS2LOGSDIR
 
 # Number of processes to run in parallel
-ECCS2NUMPROCESSES = 25
+ECCS2NUMPROCESSES = 10
 
 # The 2 SPs that will be used to test each IdP
 ECCS2SPS = ["https://sp24-test.garr.it/Shibboleth.sso/Login?entityID=", "https://attribute-viewer.aai.switch.ch/Shibboleth.sso/Login?entityID="]

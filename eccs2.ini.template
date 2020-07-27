@@ -1,14 +1,14 @@
 [uwsgi]
 project        = eccs2
-base           = /opt
+base           = /home/<USER>
 
 chdir          = %(base)/%(project)
 
 master         = true
 processes      = 2
 
-uid            = debian
-gid            = debian
+uid            = <USER>
+gid            = <USER>
 
 socket         = 127.0.0.1:8000
 chmod-socket   = 660
