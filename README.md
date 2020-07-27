@@ -177,8 +177,15 @@ Note: Pay attetion on the chromedriver version:
 1. Configure ECCS2 properties:
    * `vim eccs2properties.py` (and change it upon your needs)
 
-2. Add to `PATH` the virtualenv Python `bin` dir:
-   * `export PATH=${HOME}/eccs2/eccs2venv/bin:${PATH}`
+2. Change `PATH` by addign the virtualenv Python `bin` dir:
+   * CentOS:
+     * `vim $HOME/.bash_profile`
+     * `PATH=$PATH:$HOME/.local/bin:$HOME/bin` becomes `PATH=$HOME/eccs2/eccs2venv/bin:$HOME/.local/bin:$HOME/bin:$PATH`
+     * `source $HOME/.bash_profile`
+   * Debian:
+     * `vim $HOME/.profile`
+     * `PATH="$HOME/bin:$PATH"` becomes `PATH="$HOME/eccs2/eccs2venv/bin:$HOME/bin:$PATH"`
+     * `source $HOME/.bash_profile`
    
 3. Configure ECCS2 cron job for the local user:
    * `crontab -e`
