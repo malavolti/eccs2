@@ -19,6 +19,8 @@
     * [Configure](#configure)
     * [Execute](#execute)    
 12. [ECCS2 API Server (UWSGI)](#eccs2-api-server-uwsgi)
+    * [Install](#install-1)
+    * [Configure](#configure-1)
 13. [ECCS2 API JSON](#eccs2-api-json)
 14. [Utility for web interface](#utility-for-web-interface)
 15. [Utility for developers](#utility-for-developers)
