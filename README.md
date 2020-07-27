@@ -18,11 +18,12 @@
     * [Install](#install)
     * [Configure](#configure)
     * [Execute](#execute)    
-12. [ECCS2 API JSON](#eccs2-api-json)
-13. [Utility for web interface](#utility-for-web-interface)
-14. [Utility for developers](#utility-for-developers)
+12. [ECCS2 API Server (UWSGI)](#eccs2-api-server-uwsgi)
+13. [ECCS2 API JSON](#eccs2-api-json)
+14. [Utility for web interface](#utility-for-web-interface)
+15. [Utility for developers](#utility-for-developers)
     * [ECCS2 API Development Server](#eccs2-api-development-server)
-15. [Authors](#authors)
+16. [Authors](#authors)
 
 # Introduction
 
@@ -214,7 +215,9 @@ Note: Pay attetion on the chromedriver version:
        * `sudo restorecon -R -e $HOME/eccs2/`
        * `sudo setsebool -P httpd_can_network_connect 1`
  
-2. Add the systemd service to enable ECCS2 API:
+## Configure
+
+1. Add the systemd service to enable ECCS2 API:
    * `cd $HOME/eccs2`
    * `cp eccs2.ini.template eccs2.ini
    * `cp eccs2.service.template eccs2.service
@@ -225,7 +228,7 @@ Note: Pay attetion on the chromedriver version:
    * `sudo systemctl enable eccs2.service`
    * `sudo systemctl start eccs2.service`
 
-3. Configure Apache for ECCS2 web side:
+2. Configure Apache for ECCS2 web side:
    * Debian:
      * `sudo cp $HOME/eccs2/eccs2-debian.conf /etc/apache2/conf-available/eccs2.conf`
      * `sudo a2enconf eccs2.conf`
