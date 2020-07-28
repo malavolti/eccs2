@@ -1,16 +1,14 @@
 #!/bin/bash
 
-source $HOME/.bash_profile
-
 # logs/stderr_$date.log is kept to see which IdP had been errors
 
 BASEDIR=$HOME
 
 # Remove old IdP and Fed List
-#rm -f $BASEDIR/eccs2/input/*.json
+rm -f $BASEDIR/eccs2/input/*.json
 
 # Run ECCS2
-#$BASEDIR/eccs2/runEccs2.py
+$BASEDIR/eccs2/runEccs2.py
 
 # Run Failed Command again
 bash $BASEDIR/eccs2/logs/failed-cmd.sh
