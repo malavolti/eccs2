@@ -191,6 +191,8 @@ Note: Pay attetion on the chromedriver version:
    * `crontab -e`
 
      ```bash
+     SHELL=/bin/bash
+
      0 4 * * * /bin/bash $HOME/eccs2/cleanAndRunEccs2.sh > $HOME/eccs2/logs/eccs2cron.log 2>&1  
      ```
 
