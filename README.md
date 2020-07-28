@@ -228,8 +228,8 @@ Note: Pay attetion on the chromedriver version:
 
 1. Add the systemd service to enable ECCS2 API:
    * `cd $HOME/eccs2`
-   * `cp eccs2.ini.template eccs2.ini
-   * `cp eccs2.service.template eccs2.service
+   * `cp eccs2.ini.template eccs2.ini`
+   * `cp eccs2.service.template eccs2.service`
    * `vim eccs2.ini` (and change "`uid`", "`gid`" and "`base`" values opportunely)
    * `vim eccs2.service` (and change "`User`","`Group`","`WorkingDirectory`","`RuntimeDirectory`","`ExecStart`" values opportunely)
    * `sudo cp $HOME/eccs2/eccs2.service /etc/systemd/system/eccs2.service`
