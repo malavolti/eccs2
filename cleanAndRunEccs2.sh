@@ -4,6 +4,8 @@
 
 BASEDIR=$HOME
 
+source $HOME/.bash_profile
+
 # Remove old IdP and Fed List
 rm -f $BASEDIR/eccs2/input/*.json
 
@@ -21,44 +23,48 @@ suffix="'"
 eccs2output="$BASEDIR/eccs2/output/eccs2_$date.log"
 declare -a eccs2cmdToRemoveArray
 
-if [ -s $file ]; then
+if [ -s $eccsoutput ]; then
+   if [ -s $file ]; then
 
-   while IFS= read -r line
-   do
-      string=$line
+      while IFS= read -r line
+      do
+         string=$line
 
-      #remove "prefix" from the command string at the beginning.
-      prefix_removed_string=${string/#$prefix}
+         #remove "prefix" from the command string at the beginning.
+         prefix_removed_string=${string/#$prefix}
 
-      #remove "suffix" from the command string at the end.
-      suffix_removed_string=${prefix_removed_string/%$suffix}
+         #remove "suffix" from the command string at the end.
+         suffix_removed_string=${prefix_removed_string/%$suffix}
 
-      entityIDidp=$(echo "$suffix_removed_string" | jq '.entityID')
+         entityIDidp=$(echo "$suffix_removed_string" | jq '.entityID')
 
-      #remove start and end quotes from the entityIDidp to be able to use "grep"
-      entityIDidp="${entityIDidp:1}"
-      entityIDidp="${entityIDidp%?}"
+         #remove start and end quotes from the entityIDidp to be able to use "grep"
+         entityIDidp="${entityIDidp:1}"
+         entityIDidp="${entityIDidp%?}"
 
-      result=$(grep $entityIDidp $eccs2output | wc -l)
+         result=$(grep $entityIDidp $eccs2output | wc -l)
    
-      if [[ "$result" = 1 ]]; then
-         eccs2cmdToRemoveArray+=("$entityIDidp")
+         if [[ "$result" = 1 ]]; then
+            eccs2cmdToRemoveArray+=("$entityIDidp")
+         else
+            echo "The result for the IdP '$entityIDidp' has been found multiple times on $eccs2output. It is wrong."
+         fi
+
+      done <"$file"
+
+
+      # Remove IdP command that had success from "failed-cmd.sh"
+      for idpToRemove in ${eccs2cmdToRemoveArray[@]}
+      do
+         $(grep -v $idpToRemove $file > temp ; mv -f temp $file)
+      done
+
+      if [ -s $file ]; then
+         echo "$date - ECCS2 NOT OK: Some eduGAIN IdPs have remained unchecked. See the 'logs/failed-cmd.sh' and logs/stderr_$date.log files"
       else
-         echo "The result for the IdP '$entityIDidp' has been found multiple times on $eccs2output. It is wrong."
+         echo "$date - ECCS2 OK: All eduGAIN IdPs have been checked successfully"
       fi
-
-   done <"$file"
-
-
-   # Remove IdP command that had success from "failed-cmd.sh"
-   for idpToRemove in ${eccs2cmdToRemoveArray[@]}
-   do
-      $(grep -v $idpToRemove $file > temp ; mv -f temp $file)
-   done
-fi
-
-if [ -s $file ]; then
-   echo "$date - ECCS2 NOT OK: Some eduGAIN IdPs have remained unchecked. See the 'logs/failed-cmd.sh' and logs/stderr_$date.log files"
+   fi
 else
-   echo "$date - ECCS2 OK: All eduGAIN IdPs have been checked successfully"
+   echo "$date - Something went wrong and the ECCS2 check has not been executed"
 fi

@@ -181,11 +181,9 @@ Note: Pay attetion on the chromedriver version:
    * CentOS:
      * `vim $HOME/.bash_profile`
      * `PATH=$PATH:$HOME/.local/bin:$HOME/bin` becomes `PATH=$HOME/eccs2/eccs2venv/bin:$HOME/.local/bin:$HOME/bin:$PATH`
-     * `source $HOME/.bash_profile`
    * Debian:
      * `vim $HOME/.profile`
      * `PATH="$HOME/bin:$PATH"` becomes `PATH="$HOME/eccs2/eccs2venv/bin:$HOME/bin:$PATH"`
-     * `source $HOME/.bash_profile`
    
 3. Configure ECCS2 cron job for the local user:
    * `crontab -e`
