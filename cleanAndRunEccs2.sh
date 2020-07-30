@@ -25,7 +25,6 @@ declare -a eccs2cmdToRemoveArray
 
 if [ -s $eccsoutput ]; then
    if [ -s $file ]; then
-
       while IFS= read -r line
       do
          string=$line
@@ -64,6 +63,8 @@ if [ -s $eccsoutput ]; then
       else
          echo "$date - ECCS2 OK: All eduGAIN IdPs have been checked successfully"
       fi
+   else
+      echo "$date - ECCS2 OK: All eduGAIN IdPs have been checked successfully"
    fi
 else
    echo "$date - Something went wrong and the ECCS2 check has not been executed"
