@@ -25,9 +25,10 @@ $lastDate = str_replace($str2strip, "", $lastFile);
   <body>
     <hr>
     <div id="status">
+      <strong>Show IdPs with status:</strong>
       <input type="checkbox" name="status" value="ERROR">ERROR</input>
       <input type="checkbox" name="status" value="OK">OK</input>
-      <input type="checkbox" name="status" value="DISABLE">DISABLE</input>
+      <input type="checkbox" name="status" value="DISABLED">DISABLED</input>
       <button style="float:right;" onclick="getPastResults()">Go</button>
       <input style="float:right;" type="date" id="myDate" min="<?php echo $firstDate ?>" max="<?php echo $lastDate ?>" value="<?php echo $lastDate ?>"/>
     </div>
@@ -52,5 +53,3 @@ $lastDate = str_replace($str2strip, "", $lastFile);
     <script type="text/javascript" src="script.js" /></script>
   </body>
 </html>
-
-
