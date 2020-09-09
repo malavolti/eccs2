@@ -216,7 +216,7 @@ def getDisplayName(display_name):
               elem = elem.replace("&#039;","'")
            if '"' in elem:
               elem = elem.replace('"','\\"')
-           return elem.split(';')[1]
+           return elem.split(';', 1)[1]
 
 
 # Append the result of the check on a file
