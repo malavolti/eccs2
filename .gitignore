@@ -6,3 +6,6 @@ chromedriver
 python*
 eccs2.ini
 eccs2.service
+eccs2.properties
+clean7daysOldFiles.sh
+cleanAndRunEccs2.sh
