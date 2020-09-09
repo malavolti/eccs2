@@ -42,7 +42,7 @@ The check executed by the service follows these steps:
 1. It retrieves the eduGAIN IdPs from eduGAIN Operator Team database via a JSON interface
 
 2. For each IdP that is was not manually disabled by the eduGAIN Operations Team, the check creates a Wayfless URL for each SP involved and retrieves the IdP login page. It expects to find the HTML form with a username and password field. Therefore, no complete login will happen at the Identity Provider because the check stops at the login page.
-The SPs used for the check are "Test SP shib 2.4" (https://sp24-test.garr.it/shibboleth) from IDEM GARR AAI and the "AAI Viewer Interfederation Test" (https://attribute-viewer.aai.switch.ch/interfederation-test/shibboleth) from SWITCHaai. These SPs might change in the future if needed.
+The SPs used for the check are "Test SP shib 2.4" (https://sp-demo.idem.garr.it/shibboleth) from IDEM GARR AAI and the "AAI Viewer Interfederation Test" (https://attribute-viewer.aai.switch.ch/interfederation-test/shibboleth) from SWITCHaai. These SPs might change in the future if needed.
 The SAML authenticatin request is not signed. Therefore, authentication request for any eduGAIN SP could be created because the SP's private key is not needed.
 
 # Limitations
@@ -64,17 +64,18 @@ Disallow: /
 
 # On-line interface
 
-The test eduGAIN Connectivity Check web pages is available at: https://dev-mm.aai-test.garr.it/eccs2
+The test eduGAIN Connectivity Check web pages is available at: https://technical-test.edugain.org/eccs2
 
 The tool uses following status for IdPs:
 
 * ERROR (red):
   * The IdP's response contains an HTTP Error or the web page returned does not look like a login page. The most probable causes for this error are HTTP errors (e.g.: 404 error)
   * The IdP most likely does not consume the eduGAIN metadata correctly or it hasn't does not return a web page that looks like a login form. A typical case that falls into this category is when an IdP returns a message "No return endpoint available for relying party" or "No metadata found for relying party".
+  * The IdP has a problem with its SSL certificate.
 * OK (green):
   * The IdP most likely correctly consumes eduGAIN metadata and returns a valid login page. This is no guarantee that login on this IdP works for all eduGAIN services but if the check is passed for an IdP, this is probable.
 * DISABLED (white)
-  * The IdP is excluded from checks because it cannot be checked reliably (see limitations below) affected by some problems that prevent them to consume correctly eduGAIN metadata. The "Page Source" column, when an entity is disabled, shows the reason of the disabling.
+  * The IdP is excluded because it cannot be checked reliably. The "Page Source" column, when an entity is disabled, shows the reason of the disabling.
 
 # Requirements Hardware
 
@@ -266,7 +267,13 @@ The available dates are provided by the first and the last file created into the
 
 To clean the ECCS2 results from files older than last 7 days use (modify it on your needs):
 
-* `clean7daysOldFiles.sh`
+* `crontab -e`
+
+  ```bash
+  SHELL=/bin/bash
+
+  0 5 * * * /bin/bash $HOME/eccs2/clean7daysOldFiles.sh > $HOME/eccs2/logs/clean7daysOldFiles.log 2>&1  
+  ```
 
 # Utility for developers
 
