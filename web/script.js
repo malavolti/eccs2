@@ -22,24 +22,24 @@ function format ( d ) {
     // `d` is the original data object for the row
     return '<table id="inner-table">'+
         '<tr>'+
-            '<td>IdP DisplayName:</td>'+
+            '<td class="strong">IdP DisplayName:</td>'+
             '<td>'+d.displayName+'</td>'+
         '</tr>'+
         '<tr>'+
-            '<td>Technical Contacts:</td>'+
+            '<td class="strong">Technical Contacts:</td>'+
             '<td>'+d.contacts.technical+'</td>'+
         '</tr>'+
         '<tr>'+
-            '<td>Support Contacts:</td>'+
+            '<td class="strong">Support Contacts:</td>'+
             '<td>'+d.contacts.support+'</td>'+
-            '<td>Check Time</td>'+
-            '<td>Result Check</td>'+
-            '<td>Status Code</td>'+
-            '<td>Page Source</td>'+
-            '<td>Retry Check</td>'+
+            '<td class="strong">Check Time</td>'+
+            '<td class="strong">Result Check</td>'+
+            '<td class="strong">Status Code</td>'+
+            '<td class="strong">Page Source</td>'+
+            '<td class="strong">Retry Check</td>'+
         '</tr>'+
         '<tr>'+
-            '<td>SP1:</td>'+
+            '<td class="strong">SP1:</td>'+
             '<td>https://'+getHostname(d.sp1.wayflessUrl)+'</td>'+
             '<td>'+d.sp1.checkTime+'</td>'+
             '<td>'+d.sp1.status+'</td>'+
@@ -48,7 +48,7 @@ function format ( d ) {
             '<td><a href="'+d.sp1.wayflessUrl+'" target="_blank">Click to retry</a></td>'+
         '</tr>'+
         '<tr>'+
-            '<td>SP2:</td>'+
+            '<td class="strong">SP2:</td>'+
             '<td>https://'+getHostname(d.sp2.wayflessUrl)+'</td>'+
             '<td>'+d.sp2.checkTime+'</td>'+
             '<td>'+d.sp2.status+'</td>'+

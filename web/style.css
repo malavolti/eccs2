@@ -15,3 +15,7 @@ tr.shown td.details-control {
 #inner-table tr td{
    border: 0;
 }
+
+.strong {
+   font-weight: bold;
+}
