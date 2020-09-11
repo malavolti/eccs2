@@ -208,10 +208,17 @@ class FedStats(Resource):
                results.append(resultDict)
            return jsonify(results)
 
+# /api/
+class Help(Resource):
+    def get(self):
+        return { 'ECCS2 JSON Interface': 'https://wiki.geant.org/display/eduGAIN/eduGAIN+Connectivity+Check+2#eduGAINConnectivityCheck2-JSONinterface' }
+
+
 # Routes
 api.add_resource(Test, '/test') # Route_1
 api.add_resource(EccsResults, '/eccsresults') # Route_2
 api.add_resource(FedStats, '/fedstats') # Route_3
+api.add_resource(Help, '/') # Route_4
 
 if __name__ == '__main__':
 
