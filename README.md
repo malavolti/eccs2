@@ -178,7 +178,7 @@ Note: Pay attetion on the chromedriver version:
 1. Configure ECCS2 properties:
    * `vim eccs2properties.py` (and change it upon your needs)
 
-2. Change `PATH` by addign the virtualenv Python `bin` dir:
+2. Change `PATH` by adding the virtualenv Python `bin` dir:
    * CentOS:
      * `vim $HOME/.bash_profile`
      * `PATH=$PATH:$HOME/.local/bin:$HOME/bin` becomes `PATH=$HOME/eccs2/eccs2venv/bin:$HOME/.local/bin:$HOME/bin:$PATH`
