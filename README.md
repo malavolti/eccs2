@@ -152,17 +152,26 @@ The tool uses following status for IdPs:
 
 # Install the Chromedriver
 
-* `cd $HOME/eccs2/python/bin`
-* `wget https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip -O $HOME/eccs2/chromedriver_linux64.zip`
-* `cd $HOME/eccs2`
-* `unzip chromedriver_linux64.zip`
-* `rm chromedriver_linux64.zip`
+1. Find out which version of Chromium you are using:
+   * Debian 9 (stretch):
+     * `chromium -version` => Chromium 73.0.3683.75
+   * CentOS 7.8:
+     * `chromium-browser -version` => Chromium 83.0.4103.116
 
-Note: Pay attetion on the chromedriver version:
-* Debian 9 (stretch):
-  * `chromium -version` => Chromium 73.0.3683.75 => https://chromedriver.storage.googleapis.com/73.0.3683.68/chromedriver_linux64.zip
-* CentOS 7.8:
-  * `chromium-browser -version` => Chromium 83.0.4103.116 => https://chromedriver.storage.googleapis.com/83.0.4103.39/chromedriver_linux64.zip
+2. Take the Chrome version number, remove the last part, and append the result to URL "`https://chromedriver.storage.googleapis.com/LATEST_RELEASE_`". For example, with Chrome version 73.0.3683.75, you'd get a URL "`https://chromedriver.storage.googleapis.com/LATEST_RELEASE_73.0.3683`".
+
+3. Use the URL created in the last step to discover the version of ChromeDriver to use. For example, the above URL will get your a file containing "73.0.3683.68".
+
+4. Use the version number retrieved from the previous step to construct the URL to download ChromeDriver. With version `72.0.3626.69`, the URL would be "https://chromedriver.storage.googleapis.com/index.html?path=73.0.3683.68/"
+
+5. Download the Chromedriver and extract it with:
+   * `wget https://chromedriver.storage.googleapis.com/73.0.3683.75/chromedriver_linux64.zip -O $HOME/eccs2/chromedriver_linux64.zip`
+   * `cd $HOME/eccs2`
+   * `unzip chromedriver_linux64.zip`
+   * `rm chromedriver_linux64.zip`
+
+**Note:**
+After the initial download, it is recommended that you occasionally go through the above process again to see if there are any bug fix releases.
 
 # ECCS2 Script
 
@@ -182,11 +191,26 @@ Note: Pay attetion on the chromedriver version:
 2. Change `PATH` by adding the virtualenv Python `bin` dir:
    * CentOS:
      * `vim $HOME/.bash_profile`
-     * `PATH=$PATH:$HOME/.local/bin:$HOME/bin` becomes `PATH=$HOME/eccs2/eccs2venv/bin:$HOME/.local/bin:$HOME/bin:$PATH`
+     * Add the following lines at the tail:
+       
+       ```bash
+       # set PATH for ECCS2
+       if [ -d "$HOME/eccs2" ] ; then
+          PATH="$HOME/eccs2/eccs2venv/bin:$PATH"
+       fi
+       ```
+
    * Debian:
      * `vim $HOME/.profile`
-     * `PATH="$HOME/bin:$PATH"` becomes `PATH="$HOME/eccs2/eccs2venv/bin:$HOME/bin:$PATH"`
-   
+     * Add the following lines at the tail:
+       
+       ```bash
+       # set PATH for ECCS2
+       if [ -d "$HOME/eccs2" ] ; then
+          PATH="$HOME/eccs2/eccs2venv/bin:$PATH"
+       fi
+       ```
+
 3. Configure ECCS2 cron job for the local user:
    * `crontab -e`
 
