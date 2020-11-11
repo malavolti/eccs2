@@ -21,6 +21,7 @@
 12. [ECCS2 API Server (UWSGI)](#eccs2-api-server-uwsgi)
     * [Install](#install-1)
     * [Configure](#configure-1)
+    * [Utility](#utility)
 13. [ECCS2 API JSON](#eccs2-api-json)
 14. [Utility for web interface](#utility-for-web-interface)
 15. [Utility for developers](#utility-for-developers)
@@ -192,7 +193,7 @@ Note: Pay attetion on the chromedriver version:
      ```bash
      SHELL=/bin/bash
 
-     0 4 * * * /bin/bash $HOME/eccs2/cleanAndRunEccs2.sh > $HOME/eccs2/logs/eccs2cron.log 2>&1  
+     0 4 * * * /bin/bash $HOME/eccs2/cleanAndRunEccs2.sh > $HOME/eccs2/logs/eccs2cron.log 2>&1
      ```
 
 ## Execute
@@ -246,6 +247,12 @@ Note: Pay attetion on the chromedriver version:
      * `sudo cp $HOME/eccs2/eccs2-centos.conf /etc/httpd/conf.d/eccs2.conf`
      * `sudo chgrp apache $HOME ; sudo apache g+rx $HOME` (Apache needs permission to access the $HOME dir)
      * `sudo systemctl restart httpd.service`
+
+## Utility
+
+To perform a restart after an API change use the following command:
+
+* `touch $HOME/eccs2/eccs2.ini`
 
 # ECCS2 API JSON
 
