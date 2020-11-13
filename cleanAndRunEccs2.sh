@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# logs/stderr_$date.log is kept to see which IdP had been errors
+# logs/stderr_$date.log is the Standard Error of ECCS2 python script
+# logs/stdout_$date.log is the Standard Output of ECCS2 python script
 
 BASEDIR=$HOME
 
-source $HOME/.bash_profile
+source $HOME/.profile
 
 # Remove old IdP and Fed List
 rm -f $BASEDIR/eccs2/input/*.json
