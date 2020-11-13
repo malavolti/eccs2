@@ -8,6 +8,7 @@
 6. [Requirements Hardware](#requirements-hardware)
 7. [Requirements Software](#requirements-software)
 8. [HOWTO Install and Configure](#howto-install-and-configure)
+   * [Download ECCS2 Repository](#download-eccs2-repository)
    * [Install Python 3.8.x](#install-python-38x)
      + [CentOS 7 requirements](#centos-7-requirements)
      + [Debian requirements](#debian-requirements)
@@ -23,7 +24,8 @@
     * [Configure](#configure-1)
     * [Utility](#utility)
 13. [ECCS2 API JSON](#eccs2-api-json)
-14. [Utility for web interface](#utility-for-web-interface)
+14. [Utility for web interface (GUI)](#utility-for-web-interface-gui)
+    * [GUI Parameters](#gui-parameters)
 15. [Utility for developers](#utility-for-developers)
     * [ECCS2 API Development Server](#eccs2-api-development-server)
 16. [Authors](#authors)
@@ -306,7 +308,7 @@ To clean the ECCS2 results from files older than last 7 days use (modify it on y
   0 5 * * * /bin/bash $HOME/eccs2/clean7daysOldFiles.sh > $HOME/eccs2/logs/clean7daysOldFiles.log 2>&1  
   ```
 
-# GUI Parameters
+## GUI Parameters
 
 * `date`     (date of the check)
 * `reg_auth` (registrationAuthority IdP)
@@ -315,7 +317,7 @@ To clean the ECCS2 results from files older than last 7 days use (modify it on y
 
 **Example:**
 
-* `https://eccs2.example.org/eccs2?reg_auth=http://www.idem.garr.it/&date=2020-11-10&status=OK&idp=https://idp-iov.irccs.garr.it/idp/shibboleth`
+* https://eccs2.example.org/eccs2?**reg_auth=**http://www.idem.garr.it/&**date=**2020-11-10&**status=**OK&**idp=**https://idp-iov.irccs.garr.it/idp/shibboleth`
 
 # Utility for developers
 
