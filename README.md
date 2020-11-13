@@ -292,7 +292,7 @@ To perform a restart after an API change use the following command:
 * `/api/fedstats`
 * `/api/fedstats?reg_auth=https://reg.auth.example.org`:
 
-# Utility for web interface
+# Utility for web interface (GUI)
 
 The available dates are provided by the first and the last file created into the `output/` directory
 
@@ -305,6 +305,17 @@ To clean the ECCS2 results from files older than last 7 days use (modify it on y
 
   0 5 * * * /bin/bash $HOME/eccs2/clean7daysOldFiles.sh > $HOME/eccs2/logs/clean7daysOldFiles.log 2>&1  
   ```
+
+# GUI Parameters
+
+* `date`     (date of the check)
+* `reg_auth` (registrationAuthority IdP)
+* `idp`      (entityID IdP)
+* `status`   ('OK`, `ERROR` or `DISABLE`)
+
+**Example:**
+
+* `https://eccs2.example.org/eccs2?reg_auth=http://www.idem.garr.it/&date=2020-11-10&status=OK&idp=https://idp-iov.irccs.garr.it/idp/shibboleth`
 
 # Utility for developers
 

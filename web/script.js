@@ -1,7 +1,35 @@
-// Global URL
-//var url = "/eccs2/api/eccsresults?eccsdt=1";
-var url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
+// Needed to draw the ECCS2 DataTable
 var table;
+var url = "/eccs2/api/eccsresults?eccsdt=1";
+
+// PHP Variables retrieved from eccs2.php
+// idp (entityID of the IdP)
+// date (date time of the check)
+// reg_auth (the IdP RegistrationAuthority)
+// status (the ECCS2 IdP Status)
+if (date) {
+   url = url.concat("&date=" + date);
+}
+if (reg_auth) {
+   url = url.concat("&reg_auth=" + reg_auth);
+}
+if (idp) {
+   url = url.concat("&idp=" + idp);
+}
+if (status) {
+   url = url.concat("&status=" + status);
+}
+
+
+function getPastResults() {
+   url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
+   table.ajax.url( url ).load();
+  
+   var getUrl = window.location;
+   var baseUrl = getUrl .protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
+
+   document.location.href = baseUrl;
+}
 
 // use URL constructor and return hostname
 function getHostname(url) {
@@ -59,19 +87,32 @@ function format ( d ) {
     '</table>';
 }
 
-function getPastResults() {
-   url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
-   table.ajax.url( url ).load();
-}
- 
 $(document).ready(function() {
+    // Setup - add a text input to each footer cell
+    $('#eccstable thead tr').clone(true).appendTo( '#eccstable thead' );
+    $('#eccstable thead tr:not(:eq(1)) th').each( function (i) {
+        var title = $('#eccstable thead th').eq( $(this).index() ).text();
+        if($(this).index() !=0 && $(this).index() !=5) $(this).html( '<input type="text" placeholder="Search '+title+'" style="text-align:center;width: 100%;" />' );
+ 
+        $( 'input', this ).on( 'keyup change', function () {
+            if ( table.column(i).search() !== this.value ) {
+                table
+                    .column(i)
+                    .search( this.value )
+                    .draw();
+            }
+        } );
+    } );
+
     table = $('#eccstable').DataTable( {
+        "responsive": "true",
         "ajax": { 
            "url": url,
            "dataSrc": ""
         },
-        "lengthMenu": [[10, 20, 30, 40, 50, 100, -1], [10, 20, 30, 40, 50, 100, "All"]],
+        "lengthMenu": [[10, 30, 50, 100, -1], [10, 30, 50, 100, "All"]],
         "autoWidth": false,
+        "dom": '<"top"lip>rt<"bottom"><"clear">',
         "columns": [
             {
               "className":      'details-control',
@@ -92,18 +133,24 @@ $(document).ready(function() {
             },
             { 
               "data": "status",
-              "className": "dt-body-center"
+              "className": "dt-body-center",
+              "visible": false
             }
         ],
         "rowCallback": function( row, data, index ) {
           if (data.status == "ERROR") {
-            $('td', row).css('background-color', '#EA4335');
+            //$('td', row).css('background-color', '#EA4335'); // NEW ECCS2
+            $('td', row).css('background-color', '#EA3D3F'); // OLD ECCS
+            //$('td', row).css('background-color', '#FF0000');
+            //$('td', row).css('background-color', '#F22422');
           }
           if (data.status == "DISABLED") {
             $('td', row).css('background-color', '#FFFFFF');
           }
           if (data.status == "OK") {
-            $('td', row).css('background-color', '#34A853');
+            //$('td', row).css('background-color', '#34A853');
+            //$('td', row).css('background-color', '#00CE00'); // NEW ECCS2
+            $('td', row).css('background-color', '#72F81B'); // OLD ECCS
           }
         },
         "order": [[1, 'asc']]

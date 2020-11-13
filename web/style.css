@@ -1,14 +1,14 @@
 td.details-control {
-  background: url('./details_open.png') no-repeat center center;
+  background: url('details_open.png') no-repeat center center;
   cursor: pointer;
 }
 
 tr.shown td.details-control {
-  background: url('./details_close.png') no-repeat center center;
+  background: url('details_close.png') no-repeat center center;
 }
 
 #inner-table {
- padding-left:40px; 
+ padding-left:40px;
  background-color:white;
 }
 
@@ -16,6 +16,32 @@ tr.shown td.details-control {
    border: 0;
 }
 
+table {
+   color: black;
+}
+
+.eccs-central {
+   padding-left: 10px;
+   padding-right: 10px;
+}
+
 .strong {
    font-weight: bold;
+}
+
+button#goButton {
+   float:right;
+   padding-right: 10px;
+   padding-left: 10px;
+   padding-bottom: 2px;
+   padding-top: 2px;
+   margin-left: 5px;
+   position: relative;
+   top: -3px;
+}
+
+input#myDate {
+   float:right;
+   position: relative;
+   top: -3px;
 }

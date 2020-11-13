@@ -8,8 +8,15 @@ $firstDate = str_replace($str2strip, "", $firstFile);
 
 $files = scandir($directory, SCANDIR_SORT_DESCENDING);
 $lastFile = $files[0];
-
 $lastDate = str_replace($str2strip, "", $lastFile);
+
+$data = array();
+$data['firstDate'] = $firstDate;
+$data['lastDate'] = $lastDate;
+$data['idp'] = htmlspecialchars($_GET["idp"]);
+$data['reg_auth'] = htmlspecialchars($_GET["reg_auth"]);
+$data['date'] = htmlspecialchars($_GET["date"]);
+$data['status'] = htmlspecialchars($_GET["status"]);
 ?>
 
 <!DOCTYPE html>
@@ -29,8 +36,8 @@ $lastDate = str_replace($str2strip, "", $lastFile);
       <input type="checkbox" name="status" value="ERROR">ERROR</input>
       <input type="checkbox" name="status" value="OK">OK</input>
       <input type="checkbox" name="status" value="DISABLED">DISABLED</input>
-      <button style="float:right;" onclick="getPastResults()">Go</button>
-      <input style="float:right;" type="date" id="myDate" min="<?php echo $firstDate ?>" max="<?php echo $lastDate ?>" value="<?php echo $lastDate ?>"/>
+      <button id="goButton" onclick="getPastResults()">Go</button>
+      <input id="myDate" type="date" id="myDate" min="<?php echo $data['firstDate'] ?>" max="<?php echo $data['lastDate'] ?>" value="<?php echo $data['lastDate'] ?>"/>
     </div>
     <hr>
     <button id="btn-show-all-children" type="button">Expand All</button>
@@ -50,6 +57,12 @@ $lastDate = str_replace($str2strip, "", $lastFile);
         </thead>
       </table>
     </div>
+    <script type="text/javascript">
+       var date = "<?php echo $data['date'] ?>";
+       var reg_auth = "<?php echo $data['reg_auth'] ?>";
+       var idp = "<?php echo $data['idp'] ?>";
+       var status = "<?php echo $data['status'] ?>";
+    </script>
     <script type="text/javascript" src="script.js" /></script>
   </body>
 </html>
