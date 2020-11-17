@@ -24,8 +24,8 @@ $data['status'] = htmlspecialchars($_GET["status"]);
    <head>
     <meta charset=utf-8 />
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css"/>
     <link href="style.css" rel="stylesheet" type="text/css" />
     <title>eduGAIN Connectivity Check Service 2</title>
   </head>
@@ -37,7 +37,7 @@ $data['status'] = htmlspecialchars($_GET["status"]);
       <input type="checkbox" name="status" value="OK">OK</input>
       <input type="checkbox" name="status" value="DISABLED">DISABLED</input>
       <button id="goButton" onclick="getPastResults()">Go</button>
-      <input id="myDate" type="date" id="myDate" min="<?php echo $data['firstDate'] ?>" max="<?php echo $data['lastDate'] ?>" value="<?php echo $data['lastDate'] ?>"/>
+      <input id="myDate" type="date" min="<?php echo $data['firstDate'] ?>" max="<?php echo $data['lastDate'] ?>" value="<?php echo $data['lastDate'] ?>"/>
     </div>
     <hr>
     <button id="btn-show-all-children" type="button">Expand All</button>
