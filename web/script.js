@@ -22,13 +22,14 @@ if (status) {
 
 
 function getPastResults() {
-   url = "/eccs2/api/eccsresults?eccsdt=1&date=" + document.getElementById("myDate").value;
+   var myDate = document.getElementById("myDate").value;
+   url = "/eccs2/api/eccsresults?eccsdt=1&date=" + myDate;
    table.ajax.url( url ).load();
   
    var getUrl = window.location;
    var baseUrl = getUrl .protocol + "//" + getUrl.host + "/" + getUrl.pathname.split('/')[1];
 
-   document.location.href = baseUrl;
+   document.location.href = baseUrl + "?date=" + myDate;
 }
 
 // use URL constructor and return hostname
